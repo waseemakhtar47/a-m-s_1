@@ -528,4 +528,65 @@ window.deleteUser = async function(userId) {
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Smart Attendance System initialized');
     });
+
+
+    // Get all users (for admin page)
+window.getAllUsers = async function() {
+  try {
+    const result = await apiCall('/admin/all-users');
+    console.log('📋 All users:', result.users);
+    return result.users || [];
+  } catch (error) {
+    console.error('Failed to get all users:', error);
+    return [];
+  }
+};
+
+// Get all students - FIXED
+window.getAllStudents = async function() {
+  try {
+    const result = await apiCall('/admin/students'); // ✅ FIXED
+    return result.students || [];
+  } catch (error) {
+    console.error('Failed to get students:', error);
+    return [];
+  }
+};
+
+// Get all teachers - FIXED  
+window.getAllTeachers = async function() {
+  try {
+    const result = await apiCall('/admin/teachers'); // ✅ FIXED
+    return result.teachers || [];
+  } catch (error) {
+    console.error('Failed to get teachers:', error);
+    return [];
+  }
+};
+
+// Get all classes - FIXED
+window.getAllClasses = async function() {
+  try {
+    const result = await apiCall('/admin/classes'); // ✅ FIXED
+    return result.classes || [];
+  } catch (error) {
+    console.error('Failed to get classes:', error);
+    return [];
+  }
+};
+
+// Get all subjects - FIXED
+window.getAllSubjects = async function() {
+  try {
+    const result = await apiCall('/admin/subjects'); // ✅ FIXED
+    return result.subjects || [];
+  } catch (error) {
+    console.error('Failed to get subjects:', error);
+    return [];
+  }
+};
+
+
 })();
+
+

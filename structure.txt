@@ -1,0 +1,41 @@
+ATTENDANCE MANAGEMENT SYSTEM
+¦
++-- smart-attendance-backend
+¦   +-- config
+¦   ¦   +-- database.js
+¦   ¦
+¦   +-- controllers
+¦   ¦   +-- adminController.js
+¦   ¦   +-- analyticsController.js
+¦   ¦   +-- authController.js
+¦   ¦   +-- integrationController.js
+¦   ¦   +-- studentController.js
+¦   ¦   +-- teacherController.js
+¦   ¦
+¦   +-- middleware
+¦   ¦   +-- auth.js
+¦   ¦
+¦   +-- models
+¦   ¦   +-- Attendance.js
+¦   ¦   +-- Class.js
+¦   ¦   +-- Student.js
+¦   ¦   +-- Subject.js
+¦   ¦   +-- Teacher.js
+¦   ¦   +-- User.js
+¦   ¦
+¦   +-- node_modules
+¦   ¦
+¦   +-- routes
+¦   ¦   +-- admin.js
+¦   ¦   +-- analytics.js
+¦   ¦   +-- auth.js
+¦   ¦   +-- integrations.js
+¦   ¦   +-- student.js
+¦   ¦   +-- teacher.js
+¦   ¦
+¦   +-- .env
+¦   +-- package-lock.json
+¦   +-- package.json
+¦   +-- server.js
+¦
++-- smart-attendance-frontend

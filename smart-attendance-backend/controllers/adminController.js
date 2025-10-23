@@ -211,3 +211,84 @@ exports.getAllData = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch data' });
   }
 };
+
+
+// Get all users
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password')
+      .populate('class', 'name section')
+      .sort({ createdAt: -1 });
+
+    res.json({ users });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+};
+
+// Get all classes
+exports.getAllClasses = async (req, res) => {
+  try {
+    const classes = await Class.find()
+      .populate('students', 'firstName lastName studentId')
+      .populate('subjects.teacher', 'firstName lastName')
+      .populate('subjects.subject', 'name code')
+      .sort({ createdAt: -1 });
+
+    res.json({ classes });
+  } catch (error) {
+    console.error('Get classes error:', error);
+    res.status(500).json({ error: 'Failed to fetch classes' });
+  }
+};
+
+// Get all subjects
+exports.getAllSubjects = async (req, res) => {
+  try {
+    const subjects = await Subject.find()
+      .populate('classes', 'name section')
+      .sort({ createdAt: -1 });
+
+    res.json({ subjects });
+  } catch (error) {
+    console.error('Get subjects error:', error);
+    res.status(500).json({ error: 'Failed to fetch subjects' });
+  }
+};
+
+// Get all students
+exports.getAllStudents = async (req, res) => {
+  try {
+    const students = await User.find({ 
+      role: 'student',
+      isActive: true 
+    })
+    .select('firstName lastName email phone studentId class')
+    .populate('class', 'name section')
+    .sort({ createdAt: -1 });
+
+    res.json({ students });
+  } catch (error) {
+    console.error('Get students error:', error);
+    res.status(500).json({ error: 'Failed to fetch students' });
+  }
+};
+
+// Get all teachers  
+exports.getAllTeachers = async (req, res) => {
+  try {
+    const teachers = await User.find({ 
+      role: 'teacher',
+      isActive: true 
+    })
+    .select('firstName lastName email phone teacherId')
+    .sort({ createdAt: -1 });
+
+    res.json({ teachers });
+  } catch (error) {
+    console.error('Get teachers error:', error);
+    res.status(500).json({ error: 'Failed to fetch teachers' });
+  }
+};
