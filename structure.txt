@@ -1,41 +1,39 @@
 ATTENDANCE MANAGEMENT SYSTEM
-¦
+ï¿½
 +-- smart-attendance-backend
-¦   +-- config
-¦   ¦   +-- database.js
-¦   ¦
-¦   +-- controllers
-¦   ¦   +-- adminController.js
-¦   ¦   +-- analyticsController.js
-¦   ¦   +-- authController.js
-¦   ¦   +-- integrationController.js
-¦   ¦   +-- studentController.js
-¦   ¦   +-- teacherController.js
-¦   ¦
-¦   +-- middleware
-¦   ¦   +-- auth.js
-¦   ¦
-¦   +-- models
-¦   ¦   +-- Attendance.js
-¦   ¦   +-- Class.js
-¦   ¦   +-- Student.js
-¦   ¦   +-- Subject.js
-¦   ¦   +-- Teacher.js
-¦   ¦   +-- User.js
-¦   ¦
-¦   +-- node_modules
-¦   ¦
-¦   +-- routes
-¦   ¦   +-- admin.js
-¦   ¦   +-- analytics.js
-¦   ¦   +-- auth.js
-¦   ¦   +-- integrations.js
-¦   ¦   +-- student.js
-¦   ¦   +-- teacher.js
-¦   ¦
-¦   +-- .env
-¦   +-- package-lock.json
-¦   +-- package.json
-¦   +-- server.js
-¦
-+-- smart-attendance-frontend
+ï¿½   +-- config
+ï¿½   ï¿½   +-- database.js
+ï¿½   ï¿½
+ï¿½   +-- controllers
+ï¿½   ï¿½   +-- adminController.js
+ï¿½   ï¿½   +-- analyticsController.js
+ï¿½   ï¿½   +-- authController.js
+ï¿½   ï¿½   +-- integrationController.js
+ï¿½   ï¿½   +-- studentController.js
+ï¿½   ï¿½   +-- teacherController.js
+ï¿½   ï¿½
+ï¿½   +-- middleware
+ï¿½   ï¿½   +-- auth.js
+ï¿½   ï¿½
+ï¿½   +-- models
+ï¿½   ï¿½   +-- Attendance.js
+ï¿½   ï¿½   +-- Class.js
+ï¿½   ï¿½   +-- Student.js
+ï¿½   ï¿½   +-- Subject.js
+ï¿½   ï¿½   +-- Teacher.js
+ï¿½   ï¿½   +-- User.js
+ï¿½   ï¿½
+ï¿½   +-- node_modules
+ï¿½   ï¿½
+ï¿½   +-- routes
+ï¿½   ï¿½   +-- admin.js
+ï¿½   ï¿½   +-- analytics.js
+ï¿½   ï¿½   +-- auth.js
+ï¿½   ï¿½   +-- integrations.js
+ï¿½   ï¿½   +-- student.js
+ï¿½   ï¿½   +-- teacher.js
+ï¿½   ï¿½
+ï¿½   +-- .env
+ï¿½   +-- package-lock.json
+ï¿½   +-- package.json
+ï¿½   +-- server.js
