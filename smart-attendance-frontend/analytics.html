@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Analytics — Smart Attendance</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-slate-50">
+  <header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto flex items-center justify-between py-3 px-4">
+      <div class="text-xl font-semibold text-teal-600">Smart Attendance — Analytics</div>
+      <div class="flex items-center gap-3">
+        <a href="admin.html" class="text-sm text-gray-600 hover:text-teal-600">Admin</a>
+        <a href="teacher.html" class="text-sm text-gray-600 hover:text-teal-600">Teacher</a>
+        <a href="student.html" class="text-sm text-gray-600 hover:text-teal-600">Student</a>
+        <a href="integrations.html" class="text-sm text-gray-600 hover:text-teal-600">Integrations</a>
+        <button onclick="logout()" class="px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow">
+        <div class="flex items-center">
+          <div class="p-3 bg-blue-100 rounded-lg">
+            <i class="fas fa-user-graduate text-blue-600 text-xl"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Students</p>
+            <p class="text-2xl font-semibold text-gray-900" id="totalStudents">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow">
+        <div class="flex items-center">
+          <div class="p-3 bg-green-100 rounded-lg">
+            <i class="fas fa-school text-green-600 text-xl"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Classes</p>
+            <p class="text-2xl font-semibold text-gray-900" id="totalClasses">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow">
+        <div class="flex items-center">
+          <div class="p-3 bg-yellow-100 rounded-lg">
+            <i class="fas fa-percentage text-yellow-600 text-xl"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Overall Attendance</p>
+            <p class="text-2xl font-semibold text-gray-900" id="overallAttendance">0%</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow">
+        <div class="flex items-center">
+          <div class="p-3 bg-purple-100 rounded-lg">
+            <i class="fas fa-calendar-day text-purple-600 text-xl"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Today's Attendance</p>
+            <p class="text-2xl font-semibold text-gray-900" id="todayAttendance">0%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Subject-wise Attendance -->
+      <div class="bg-white p-6 rounded-xl shadow">
+        <h3 class="text-lg font-medium mb-4">Subject-wise Attendance</h3>
+        <canvas id="subjectChart" width="400" height="200"></canvas>
+      </div>
+
+      <!-- Monthly Trend -->
+      <div class="bg-white p-6 rounded-xl shadow">
+        <h3 class="text-lg font-medium mb-4">Monthly Attendance Trend</h3>
+        <canvas id="monthlyTrendChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent Activity & Quick Stats -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Recent Activity -->
+      <div class="bg-white p-6 rounded-xl shadow">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-medium">Recent Activity</h3>
+          <button class="text-sm text-blue-600 hover:text-blue-700 font-medium" onclick="loadRecentActivity()">
+            Refresh
+          </button>
+        </div>
+        <div id="recentActivity" class="space-y-3 max-h-80 overflow-auto">
+          <!-- Activity items will be populated here -->
+        </div>
+      </div>
+      
+      <!-- Class Performance -->
+      <div class="bg-white p-6 rounded-xl shadow">
+        <h3 class="text-lg font-medium mb-4">Class Performance</h3>
+        <div id="classPerformance" class="space-y-4">
+          <!-- Class performance will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Analytics -->
+    <div class="bg-white p-6 rounded-xl shadow">
+      <h3 class="text-lg font-medium mb-4">Detailed Analytics</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <h4 class="font-medium text-gray-700 mb-2">Attendance Trends</h4>
+          <div class="text-sm text-gray-600">
+            <div class="flex justify-between mb-1">
+              <span>This Week</span>
+              <span id="weekAttendance">0%</span>
+            </div>
+            <div class="flex justify-between mb-1">
+              <span>This Month</span>
+              <span id="monthAttendance">0%</span>
+            </div>
+            <div class="flex justify-between">
+              <span>This Year</span>
+              <span id="yearAttendance">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-gray-700 mb-2">Top Performers</h4>
+          <div id="topPerformers" class="text-sm text-gray-600">
+            <!-- Top performers will be populated here -->
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-gray-700 mb-2">Areas of Concern</h4>
+          <div id="areasOfConcern" class="text-sm text-gray-600">
+            <!-- Areas of concern will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    // Check authentication
+    if (!protectAnyRole()) {
+      window.location.href = 'index.html';
+    }
+    
+    let subjectChart, monthlyTrendChart;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      initAnalyticsPage();
+    });
+    
+    async function initAnalyticsPage() {
+      try {
+        const data = await getAnalyticsData();
+        renderAnalyticsData(data);
+      } catch (error) {
+        console.error('Failed to load analytics data:', error);
+        renderAnalyticsData(getMockAnalyticsData());
+      }
+    }
+    
+    function getMockAnalyticsData() {
+      return {
+        totalStudents: 245,
+        totalClasses: 12,
+        overallAttendance: 87,
+        todayAttendance: 92,
+        subjectAttendance: [
+          { subject: 'Mathematics', percentage: 92 },
+          { subject: 'Science', percentage: 88 },
+          { subject: 'English', percentage: 85 },
+          { subject: 'History', percentage: 78 },
+          { subject: 'Physics', percentage: 90 }
+        ],
+        monthlyTrend: [85, 82, 88, 87, 90, 92, 89, 91, 87, 85, 88, 90],
+        recentActivity: [
+          { studentName: 'John Doe', subjectName: 'Mathematics', status: 'P', time: new Date().toISOString() },
+          { studentName: 'Jane Smith', subjectName: 'Science', status: 'A', time: new Date(Date.now() - 3600000).toISOString() },
+          { studentName: 'Mike Johnson', subjectName: 'English', status: 'P', time: new Date(Date.now() - 7200000).toISOString() },
+          { studentName: 'Sarah Wilson', subjectName: 'History', status: 'P', time: new Date(Date.now() - 10800000).toISOString() },
+          { studentName: 'Tom Brown', subjectName: 'Physics', status: 'A', time: new Date(Date.now() - 14400000).toISOString() }
+        ],
+        classPerformance: [
+          { className: 'Grade 10-A', attendance: 94, students: 30 },
+          { className: 'Grade 10-B', attendance: 88, students: 28 },
+          { className: 'Grade 9-A', attendance: 91, students: 32 },
+          { className: 'Grade 9-B', attendance: 85, students: 29 },
+          { className: 'Grade 11-A', attendance: 89, students: 31 }
+        ]
+      };
+    }
+    
+    function renderAnalyticsData(data) {
+      // Update summary cards
+      document.getElementById('totalStudents').textContent = data.totalStudents || 0;
+      document.getElementById('totalClasses').textContent = data.totalClasses || 0;
+      document.getElementById('overallAttendance').textContent = (data.overallAttendance || 0) + '%';
+      document.getElementById('todayAttendance').textContent = (data.todayAttendance || 0) + '%';
+      
+      // Render subject chart
+      renderSubjectChart(data.subjectAttendance || []);
+      
+      // Render monthly trend chart
+      renderMonthlyTrendChart(data.monthlyTrend || []);
+      
+      // Render recent activity
+      renderRecentActivity(data.recentActivity || []);
+      
+      // Render class performance
+      renderClassPerformance(data.classPerformance || []);
+      
+      // Set trends
+      document.getElementById('weekAttendance').textContent = '85%';
+      document.getElementById('monthAttendance').textContent = (data.overallAttendance || 0) + '%';
+      document.getElementById('yearAttendance').textContent = '82%';
+      
+      // Set top performers
+      document.getElementById('topPerformers').innerHTML = `
+        <div class="text-green-600">• Grade 10-A: 94%</div>
+        <div class="text-green-600">• Grade 9-A: 91%</div>
+        <div class="text-green-600">• Grade 11-A: 89%</div>
+      `;
+      
+      // Set areas of concern
+      document.getElementById('areasOfConcern').innerHTML = `
+        <div class="text-red-600">• History: 78% attendance</div>
+        <div class="text-yellow-600">• Grade 9-B: Declining trend</div>
+      `;
+    }
+    
+    function renderSubjectChart(subjectData) {
+      const ctx = document.getElementById('subjectChart').getContext('2d');
+      
+      if (subjectChart) {
+        subjectChart.destroy();
+      }
+      
+      subjectChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: subjectData.map(s => s.subject),
+          datasets: [{
+            label: 'Attendance %',
+            data: subjectData.map(s => s.percentage),
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(245, 158, 11, 0.8)',
+              'rgba(139, 92, 246, 0.8)',
+              'rgba(239, 68, 68, 0.8)'
+            ],
+            borderColor: [
+              'rgb(59, 130, 246)',
+              'rgb(16, 185, 129)',
+              'rgb(245, 158, 11)',
+              'rgb(139, 92, 246)',
+              'rgb(239, 68, 68)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Attendance Percentage'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+    
+    function renderMonthlyTrendChart(monthlyData) {
+      const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      if (monthlyTrendChart) {
+        monthlyTrendChart.destroy();
+      }
+      
+      monthlyTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months.slice(0, monthlyData.length),
+          datasets: [{
+            label: 'Attendance %',
+            data: monthlyData,
+            borderColor: 'rgb(79, 70, 229)',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Attendance Percentage'
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function renderRecentActivity(activities) {
+      const activityDiv = document.getElementById('recentActivity');
+      
+      if (activities.length === 0) {
+        activityDiv.innerHTML = '<div class="text-gray-500 text-center py-4">No recent activity</div>';
+        return;
+      }
+      
+      activityDiv.innerHTML = activities.map(activity => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center ${
+              activity.status === 'P' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            }">
+              <i class="fas fa-${activity.status === 'P' ? 'check' : 'times'} text-xs"></i>
+            </div>
+            <div>
+              <div class="font-medium text-sm">${activity.studentName || 'Unknown Student'}</div>
+              <div class="text-xs text-gray-500">${activity.subjectName || 'Unknown Subject'}</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm font-medium ${activity.status === 'P' ? 'text-green-600' : 'text-red-600'}">
+              ${activity.status === 'P' ? 'Present' : 'Absent'}
+            </div>
+            <div class="text-xs text-gray-500">${formatTime(activity.time)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function renderClassPerformance(classes) {
+      const performanceDiv = document.getElementById('classPerformance');
+      
+      if (classes.length === 0) {
+        performanceDiv.innerHTML = '<div class="text-gray-500 text-center py-4">No class data available</div>';
+        return;
+      }
+      
+      performanceDiv.innerHTML = classes.map(cls => `
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="flex justify-between text-sm mb-1">
+              <span class="font-medium">${cls.className}</span>
+              <span class="${cls.attendance >= 85 ? 'text-green-600' : cls.attendance >= 75 ? 'text-yellow-600' : 'text-red-600'}">
+                ${cls.attendance}%
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full ${
+                cls.attendance >= 85 ? 'bg-green-600' : cls.attendance >= 75 ? 'bg-yellow-500' : 'bg-red-600'
+              }" style="width: ${cls.attendance}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">${cls.students} students</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function formatTime(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return date.toLocaleDateString();
+    }
+    
+    async function loadRecentActivity() {
+      try {
+        const data = await getAnalyticsData();
+        renderRecentActivity(data.recentActivity || []);
+      } catch (error) {
+        console.error('Failed to refresh activity:', error);
+      }
+    }
+  </script>
+</body>
+</html>

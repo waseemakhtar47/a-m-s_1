@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Attendance — Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .contact-method.active {
+      border-color: #8b5cf6;
+      background-color: #f3f4f6;
+      color: #8b5cf6;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50 flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <!-- Main Card -->
+    <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Smart Attendance</h1>
+        <p class="text-gray-500 text-sm">Welcome back! Please sign in to continue</p>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email or Phone Number</label>
+          <input 
+            id="loginEmail" 
+            type="text" 
+            placeholder="Enter your email or phone number" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input 
+            id="loginPassword" 
+            type="password" 
+            placeholder="Enter your password" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+          <select 
+            id="loginRole" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none bg-white"
+          >
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        
+        <button 
+          id="loginBtn" 
+          class="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-3 rounded-lg hover:from-teal-600 hover:to-blue-700 transition duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+        >
+          Sign In
+        </button>
+        
+        <div class="text-center mt-3">
+          <button 
+            id="forgotPasswordBtn"
+            type="button"
+            class="text-sm text-teal-600 hover:text-teal-700 transition duration-200 underline"
+          >
+            Forgot Password?
+          </button>
+        </div>
+      </div>
+
+      <!-- Registration Form (Hidden by default) -->
+      <div id="registerForm" class="space-y-5 hidden">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+            <input 
+              id="registerFirstName" 
+              type="text" 
+              placeholder="First name" 
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+            <input 
+              id="registerLastName" 
+              type="text" 
+              placeholder="Last name" 
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+            />
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+          <input 
+            id="registerEmail" 
+            type="email" 
+            placeholder="Enter your email" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+          <input 
+            id="registerPhone" 
+            type="tel" 
+            placeholder="Enter your phone number (e.g., +91 9876543210)" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input 
+            id="registerPassword" 
+            type="password" 
+            placeholder="Create a password" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+          <input 
+            id="registerConfirmPassword" 
+            type="password" 
+            placeholder="Confirm your password" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+          <select 
+            id="registerRole" 
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none bg-white"
+          >
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        
+        <div id="studentFields" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
+            <input 
+              id="registerStudentId" 
+              type="text" 
+              placeholder="e.g., S001" 
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+            />
+          </div>
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="text-sm text-blue-800">
+              <strong>ℹ️ Note:</strong> Admin will assign you to a class after registration.
+            </div>
+          </div>
+        </div>
+        
+        <div id="teacherFields" class="hidden">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Teacher ID</label>
+            <input 
+              id="registerTeacherId" 
+              type="text" 
+              placeholder="e.g., T001" 
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 outline-none"
+            />
+          </div>
+        </div>
+        
+        <div id="adminFields" class="hidden">
+          <div id="adminWarning" class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="text-sm text-yellow-800">
+              <strong>⚠️ Note:</strong> Admin registration is only allowed for the first user in the system.
+            </div>
+          </div>
+        </div>
+        
+        <button 
+          id="registerBtn" 
+          class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+        >
+          Create Account
+        </button>
+      </div>
+
+      <!-- Toggle between forms -->
+      <div class="mt-6 text-center">
+        <div id="loginToggle">
+          <span class="text-sm text-gray-600">Don't have an account?</span>
+          <button 
+            onclick="toggleForm()" 
+            class="text-sm text-teal-600 hover:text-teal-700 font-medium ml-1 transition duration-200"
+          >
+            Sign up here
+          </button>
+        </div>
+        <div id="registerToggle" class="hidden">
+          <span class="text-sm text-gray-600">Already have an account?</span>
+          <button 
+            onclick="toggleForm()" 
+            class="text-sm text-teal-600 hover:text-teal-700 font-medium ml-1 transition duration-200"
+          >
+            Sign in here
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md">
+        <div class="p-8">
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Reset Password</h2>
+            <p class="text-gray-500 text-sm">Enter your email to receive OTP</p>
+          </div>
+
+          <!-- Step 1: Contact Method Selection -->
+          <div id="contactStep" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Send OTP via</label>
+              <div class="grid grid-cols-2 gap-3">
+                <button 
+                  id="emailMethodBtn"
+                  type="button"
+                  class="flex items-center justify-center px-4 py-3 border-2 border-purple-200 rounded-lg hover:border-purple-500 transition duration-200 contact-method active"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                  Email
+                </button>
+                <button 
+                  id="phoneMethodBtn"
+                  type="button"
+                  class="flex items-center justify-center px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-purple-500 transition duration-200 contact-method"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                  </svg>
+                  Phone
+                </button>
+              </div>
+            </div>
+            
+            <div id="emailInput" class="contact-input">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <input 
+                id="forgotEmail" 
+                type="email" 
+                placeholder="Enter your registered email" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 outline-none"
+              />
+            </div>
+            
+            <div id="phoneInput" class="contact-input hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+              <input 
+                id="forgotPhone" 
+                type="tel" 
+                placeholder="Enter your registered phone number" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 outline-none"
+              />
+            </div>
+            
+            <button 
+              id="sendOTPBtn" 
+              class="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-3 rounded-lg hover:from-purple-600 hover:to-pink-700 transition duration-200 font-medium"
+            >
+              Send OTP
+            </button>
+          </div>
+
+          <!-- Step 2: OTP Input -->
+          <div id="otpStep" class="space-y-4 hidden">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
+              <input 
+                id="otpInput" 
+                type="text" 
+                placeholder="Enter 6-digit OTP" 
+                maxlength="6"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 outline-none text-center text-2xl tracking-widest"
+              />
+            </div>
+            <div class="text-center">
+              <p class="text-sm text-gray-600">OTP sent to <span id="otpEmailDisplay" class="font-medium"></span></p>
+              <button id="resendOTPBtn" class="text-sm text-purple-600 hover:text-purple-700 mt-2 underline">Resend OTP</button>
+            </div>
+            <button 
+              id="verifyOTPBtn" 
+              class="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-3 rounded-lg hover:from-purple-600 hover:to-pink-700 transition duration-200 font-medium"
+            >
+              Verify OTP
+            </button>
+          </div>
+
+          <!-- Step 3: New Password -->
+          <div id="passwordStep" class="space-y-4 hidden">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+              <input 
+                id="newPassword" 
+                type="password" 
+                placeholder="Enter new password" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+              <input 
+                id="confirmNewPassword" 
+                type="password" 
+                placeholder="Confirm new password" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 outline-none"
+              />
+            </div>
+            <button 
+              id="resetPasswordBtn" 
+              class="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-3 rounded-lg hover:from-purple-600 hover:to-pink-700 transition duration-200 font-medium"
+            >
+              Reset Password
+            </button>
+          </div>
+
+          <div class="text-center mt-6">
+            <button 
+              id="closeForgotModal" 
+              class="text-sm text-gray-600 hover:text-gray-800 transition duration-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Info Card -->
+    <div class="mt-4 bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-gray-100">
+      <h3 class="text-sm font-medium text-gray-700 mb-2">Getting Started</h3>
+      <div class="text-xs text-gray-600 space-y-1">
+        <div class="text-xs text-gray-500">
+          <strong>First Time Setup:</strong><br>
+          1. Register as Admin (first user only)<br>
+          2. Other users register as Teacher/Student<br>
+          3. Admin activates/assigns users<br>
+          4. Users can then login
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let isLoginForm = true;
+
+    function toggleForm() {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const loginToggle = document.getElementById('loginToggle');
+      const registerToggle = document.getElementById('registerToggle');
+      const title = document.querySelector('h1');
+      const subtitle = document.querySelector('p');
+
+      if (isLoginForm) {
+        // Switch to register
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        loginToggle.classList.add('hidden');
+        registerToggle.classList.remove('hidden');
+        title.textContent = 'Create Account';
+        subtitle.textContent = 'Join Smart Attendance today';
+        isLoginForm = false;
+      } else {
+        // Switch to login
+        registerForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        registerToggle.classList.add('hidden');
+        loginToggle.classList.remove('hidden');
+        title.textContent = 'Smart Attendance';
+        subtitle.textContent = 'Welcome back! Please sign in to continue';
+        isLoginForm = true;
+      }
+    }
+
+    // Show/hide role-specific fields
+    document.getElementById('registerRole').addEventListener('change', function() {
+      const studentFields = document.getElementById('studentFields');
+      const teacherFields = document.getElementById('teacherFields');
+      const adminFields = document.getElementById('adminFields');
+      
+      // Hide all fields first
+      studentFields.classList.add('hidden');
+      teacherFields.classList.add('hidden');
+      adminFields.classList.add('hidden');
+      
+      // Show relevant fields
+      if (this.value === 'student') {
+        studentFields.classList.remove('hidden');
+      } else if (this.value === 'teacher') {
+        teacherFields.classList.remove('hidden');
+      } else if (this.value === 'admin') {
+        adminFields.classList.remove('hidden');
+      }
+    });
+
+    // Login functionality
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const emailOrPhone = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPassword').value.trim();
+      const role = document.getElementById('loginRole').value;
+      
+      if (!emailOrPhone || !pass) {
+        alert('Please enter your email/phone and password');
+        return;
+      }
+      
+      const success = await login(emailOrPhone, pass, role);
+      if (success) {
+        if (role === 'admin') location.href = 'admin.html';
+        else if (role === 'teacher') location.href = 'teacher.html';
+        else location.href = 'student.html';
+      } else {
+        alert('Invalid credentials. Please check your email/phone, password, and role.');
+      }
+    });
+
+    // Register functionality
+    document.getElementById('registerBtn').addEventListener('click', async () => {
+      const firstName = document.getElementById('registerFirstName').value.trim();
+      const lastName = document.getElementById('registerLastName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const phone = document.getElementById('registerPhone').value.trim();
+      const password = document.getElementById('registerPassword').value.trim();
+      const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
+      const role = document.getElementById('registerRole').value;
+      
+      // Basic validation
+      if (!firstName || !lastName || !email || !phone || !password) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+      
+      if (password.length < 3) {
+        alert('Password must be at least 3 characters long');
+        return;
+      }
+
+      // Role-specific validation and registration
+      if (role === 'student') {
+        const studentId = document.getElementById('registerStudentId').value.trim();
+        
+        if (!studentId) {
+          alert('Please provide Student ID');
+          return;
+        }
+        
+        const success = await registerStudent(studentId, firstName + ' ' + lastName, email, phone, password);
+        if (success) {
+          alert('Student account created successfully! Wait for admin to assign you to a class, then you can log in.');
+          toggleForm();
+        } else {
+          alert('Registration failed. Student ID, email, or phone might already exist.');
+        }
+      } else if (role === 'teacher') {
+        const teacherId = document.getElementById('registerTeacherId').value.trim();
+        
+        if (!teacherId) {
+          alert('Please provide Teacher ID');
+          return;
+        }
+        
+        const success = await registerTeacher(teacherId, firstName + ' ' + lastName, email, phone, password);
+        if (success) {
+          alert('Teacher account created successfully! Wait for admin activation, then you can log in.');
+          toggleForm();
+        } else {
+          alert('Registration failed. Teacher ID, email, or phone might already exist.');
+        }
+      } else if (role === 'admin') {
+        const result = await registerAdmin(firstName + ' ' + lastName, email, phone, password);
+        if (result.success) {
+          alert('Admin account created successfully! You can now log in and manage the system.');
+          toggleForm();
+        } else {
+          alert('Registration failed: ' + result.error);
+        }
+      }
+    });
+
+    // Enter key support
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        if (isLoginForm) {
+          document.getElementById('loginBtn').click();
+        } else {
+          document.getElementById('registerBtn').click();
+        }
+      }
+    });
+    
+    // Forgot Password functionality
+    let currentForgotContact = '';
+    let currentContactType = 'email';
+    
+    // Open forgot password modal
+    document.getElementById('forgotPasswordBtn').addEventListener('click', () => {
+      document.getElementById('forgotPasswordModal').classList.remove('hidden');
+      resetForgotPasswordModal();
+    });
+    
+    // Close forgot password modal
+    document.getElementById('closeForgotModal').addEventListener('click', () => {
+      document.getElementById('forgotPasswordModal').classList.add('hidden');
+      resetForgotPasswordModal();
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('forgotPasswordModal').addEventListener('click', (e) => {
+      if (e.target.id === 'forgotPasswordModal') {
+        document.getElementById('forgotPasswordModal').classList.add('hidden');
+        resetForgotPasswordModal();
+      }
+    });
+    
+    // Contact method selection
+    document.getElementById('emailMethodBtn').addEventListener('click', () => {
+      selectContactMethod('email');
+    });
+    
+    document.getElementById('phoneMethodBtn').addEventListener('click', () => {
+      selectContactMethod('phone');
+    });
+    
+    function selectContactMethod(method) {
+      currentContactType = method;
+      
+      // Update button styles
+      document.querySelectorAll('.contact-method').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      if (method === 'email') {
+        document.getElementById('emailMethodBtn').classList.add('active');
+        document.getElementById('emailInput').classList.remove('hidden');
+        document.getElementById('phoneInput').classList.add('hidden');
+      } else {
+        document.getElementById('phoneMethodBtn').classList.add('active');
+        document.getElementById('phoneInput').classList.remove('hidden');
+        document.getElementById('emailInput').classList.add('hidden');
+      }
+    }
+    
+    function resetForgotPasswordModal() {
+      // Show contact step, hide others
+      document.getElementById('contactStep').classList.remove('hidden');
+      document.getElementById('otpStep').classList.add('hidden');
+      document.getElementById('passwordStep').classList.add('hidden');
+      
+      // Reset contact method to email
+      selectContactMethod('email');
+      
+      // Clear inputs
+      document.getElementById('forgotEmail').value = '';
+      document.getElementById('forgotPhone').value = '';
+      document.getElementById('otpInput').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmNewPassword').value = '';
+      
+      currentForgotContact = '';
+      currentContactType = 'email';
+    }
+    
+    // Send OTP
+    document.getElementById('sendOTPBtn').addEventListener('click', async () => {
+      let contact;
+      let result;
+      
+      if (currentContactType === 'email') {
+        contact = document.getElementById('forgotEmail').value.trim();
+        if (!contact) {
+          alert('Please enter your email address');
+          return;
+        }
+        result = await sendEmailOTP(contact);
+      } else {
+        contact = document.getElementById('forgotPhone').value.trim();
+        if (!contact) {
+          alert('Please enter your phone number');
+          return;
+        }
+        result = await sendSMSOTP(contact);
+      }
+      
+      if (result.success) {
+        currentForgotContact = contact;
+        document.getElementById('otpEmailDisplay').textContent = contact;
+        
+        // Move to OTP step
+        document.getElementById('contactStep').classList.add('hidden');
+        document.getElementById('otpStep').classList.remove('hidden');
+      } else {
+        alert('Error: ' + result.error);
+      }
+    });
+    
+    // Resend OTP
+    document.getElementById('resendOTPBtn').addEventListener('click', async () => {
+      if (currentForgotContact) {
+        if (currentContactType === 'email') {
+          await sendEmailOTP(currentForgotContact);
+        } else {
+          await sendSMSOTP(currentForgotContact);
+        }
+      }
+    });
+    
+    // Verify OTP
+    document.getElementById('verifyOTPBtn').addEventListener('click', async () => {
+      const otp = document.getElementById('otpInput').value.trim();
+      
+      if (!otp || otp.length !== 6) {
+        alert('Please enter a valid 6-digit OTP');
+        return;
+      }
+      
+      const result = await verifyOTP(currentForgotContact, otp);
+      if (result.success) {
+        // Move to password reset step
+        document.getElementById('otpStep').classList.add('hidden');
+        document.getElementById('passwordStep').classList.remove('hidden');
+      } else {
+        alert('Error: ' + result.error);
+      }
+    });
+    
+    // Reset Password
+    document.getElementById('resetPasswordBtn').addEventListener('click', async () => {
+      const newPassword = document.getElementById('newPassword').value.trim();
+      const confirmPassword = document.getElementById('confirmNewPassword').value.trim();
+      
+      if (!newPassword || !confirmPassword) {
+        alert('Please fill in both password fields');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+      
+      if (newPassword.length < 3) {
+        alert('Password must be at least 3 characters long');
+        return;
+      }
+      
+      const result = await resetPassword(currentForgotContact, currentContactType, newPassword);
+      if (result.success) {
+        alert('Password reset successfully! You can now login with your new password.');
+        document.getElementById('forgotPasswordModal').classList.add('hidden');
+        resetForgotPasswordModal();
+      } else {
+        alert('Error: ' + result.error);
+      }
+    });
+  </script>
+</body>
+</html>

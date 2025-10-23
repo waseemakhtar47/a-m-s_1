@@ -1,0 +1,1144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Dashboard - Smart Attendance</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  .sidebar {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.main-content {
+  margin-left: 16rem;
+  transition: all 0.3s ease;
+}
+.active-tab {
+  background-color: #e0f2fe;
+  border-left: 4px solid #0ea5e9;
+  color: #0369a1;
+}
+.stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Fix for table overflow */
+.overflow-x-auto {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Ensure text doesn't overflow */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fix for dropdowns */
+select {
+  max-width: 100%;
+}
+
+/* Fix for buttons with icons */
+.btn-with-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Prevent text selection on interactive elements */
+.nav-item, button, select {
+  user-select: none;
+}
+
+/* Clear focus states */
+button:focus, select:focus, input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+</style>
+</head>
+<body class="bg-gray-50">
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col">
+    <!-- Logo -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+          <i class="fas fa-user-check text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-gray-800">Smart Attendance</h1>
+          <p class="text-xs text-gray-500">Admin Panel</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="flex-1 px-4 py-6 space-y-2">
+      <a href="#" class="nav-item active-tab flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200" data-tab="dashboard">
+        <i class="fas fa-tachometer-alt w-5 text-center"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200" data-tab="users">
+        <i class="fas fa-users w-5 text-center"></i>
+        <span>User Management</span>
+      </a>
+      <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200" data-tab="classes">
+        <i class="fas fa-chalkboard-teacher w-5 text-center"></i>
+        <span>Class Management</span>
+      </a>
+      <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200" data-tab="subjects">
+        <i class="fas fa-book w-5 text-center"></i>
+        <span>Subject Management</span>
+      </a>
+      <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200" data-tab="assignments">
+        <i class="fas fa-tasks w-5 text-center"></i>
+        <span>Assignments</span>
+      </a>
+      <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200" data-tab="reports">
+        <i class="fas fa-chart-bar w-5 text-center"></i>
+        <span>Reports</span>
+      </a>
+    </nav>
+    
+    <!-- User Profile -->
+    <div class="p-4 border-t border-gray-200">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+          <i class="fas fa-user-shield text-white"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 truncate" id="adminName">Admin User</p>
+          <p class="text-xs text-gray-500 truncate">Administrator</p>
+        </div>
+        <button id="logoutBtn" class="text-gray-500 hover:text-red-500 transition-colors duration-200" title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="main-content min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div class="flex items-center justify-between px-8 py-4">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800" id="pageTitle">Dashboard</h2>
+          <p class="text-gray-600" id="pageSubtitle">Welcome to your admin dashboard</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="text-right">
+            <p class="text-sm font-medium text-gray-900" id="currentDate">Loading...</p>
+            <p class="text-xs text-gray-500" id="currentTime">Loading...</p>
+          </div>
+          <div class="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
+            <i class="fas fa-user-shield"></i>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Dashboard Content -->
+    <main class="p-8">
+      <!-- Dashboard Tab -->
+      <div id="dashboard" class="tab-content">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Total Students</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-2" id="totalStudents">0</h3>
+              </div>
+              <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-graduate text-blue-600 text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-green-600 font-medium flex items-center">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="studentChange">0</span>
+              </span>
+              <span class="text-gray-500 ml-2">from last month</span>
+            </div>
+          </div>
+          
+          <div class="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Total Teachers</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-2" id="totalTeachers">0</h3>
+              </div>
+              <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chalkboard-teacher text-green-600 text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-green-600 font-medium flex items-center">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="teacherChange">0</span>
+              </span>
+              <span class="text-gray-500 ml-2">from last month</span>
+            </div>
+          </div>
+          
+          <div class="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Total Classes</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-2" id="totalClasses">0</h3>
+              </div>
+              <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-school text-purple-600 text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-green-600 font-medium flex items-center">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="classChange">0</span>
+              </span>
+              <span class="text-gray-500 ml-2">from last month</span>
+            </div>
+          </div>
+          
+          <div class="stat-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Pending Approvals</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-2" id="pendingApprovals">0</h3>
+              </div>
+              <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4">
+              <button onclick="showTab('users')" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                Review now →
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Recent Activity & Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Recent Activity -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-semibold text-gray-800">Recent Activity</h3>
+              <button class="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
+            </div>
+            <div class="space-y-4" id="recentActivity">
+              <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
+                  <i class="fas fa-user-plus text-green-600 text-xs"></i>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-800">New teacher registration: John Smith</p>
+                  <p class="text-xs text-gray-500">2 hours ago</p>
+                </div>
+              </div>
+              <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1">
+                  <i class="fas fa-school text-blue-600 text-xs"></i>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-800">New class created: Grade 10-A</p>
+                  <p class="text-xs text-gray-500">5 hours ago</p>
+                </div>
+              </div>
+              <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mt-1">
+                  <i class="fas fa-book text-purple-600 text-xs"></i>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-800">New subject added: Mathematics</p>
+                  <p class="text-xs text-gray-500">1 day ago</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-6">Quick Actions</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <button onclick="showTab('users')" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors duration-200">
+                <i class="fas fa-user-check text-blue-600 text-xl mb-2"></i>
+                <span class="text-sm font-medium text-blue-800">Approve Users</span>
+              </button>
+              <button onclick="showTab('classes')" class="flex flex-col items-center justify-center p-4 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition-colors duration-200">
+                <i class="fas fa-plus-circle text-green-600 text-xl mb-2"></i>
+                <span class="text-sm font-medium text-green-800">Create Class</span>
+              </button>
+              <button onclick="showTab('subjects')" class="flex flex-col items-center justify-center p-4 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors duration-200">
+                <i class="fas fa-book-medical text-purple-600 text-xl mb-2"></i>
+                <span class="text-sm font-medium text-purple-800">Add Subject</span>
+              </button>
+              <button onclick="showTab('assignments')" class="flex flex-col items-center justify-center p-4 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition-colors duration-200">
+                <i class="fas fa-tasks text-yellow-600 text-xl mb-2"></i>
+                <span class="text-sm font-medium text-yellow-800">Assign Roles</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- User Management Tab -->
+      <div id="users" class="tab-content hidden">
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800">User Management</h3>
+          <p class="text-gray-600">Manage all users in the system</p>
+        </div>
+        
+        <!-- Pending Approvals -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <h4 class="text-lg font-semibold text-gray-800">Pending Approvals</h4>
+            <div class="flex space-x-2">
+              <button id="refreshUsers" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">User ID</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Name</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Email</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Phone</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Role</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Registered</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pendingUsersTable">
+                <!-- Pending users will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- All Users -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h4 class="text-lg font-semibold text-gray-800">All Users</h4>
+            <div class="flex space-x-2">
+              <select id="userFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="all">All Users</option>
+                <option value="student">Students</option>
+                <option value="teacher">Teachers</option>
+                <option value="admin">Admins</option>
+              </select>
+              <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                <i class="fas fa-download mr-2"></i>Export
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">User ID</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Name</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Email</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Phone</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Role</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="allUsersTable">
+                <!-- All users will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Class Management Tab -->
+      <div id="classes" class="tab-content hidden">
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800">Class Management</h3>
+          <p class="text-gray-600">Create and manage classes</p>
+        </div>
+        
+        <!-- Create Class Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Create New Class</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Class Name</label>
+              <input type="text" id="className" placeholder="e.g., Grade 10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Section</label>
+              <input type="text" id="classSection" placeholder="e.g., A" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div class="flex items-end">
+              <button id="createClassBtn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                Create Class
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Class List -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h4 class="text-lg font-semibold text-gray-800">All Classes</h4>
+            <button id="refreshClasses" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+              <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Class ID</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Class Name</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Section</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Students</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Teachers</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="classesTable">
+                <!-- Classes will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Subject Management Tab -->
+      <div id="subjects" class="tab-content hidden">
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800">Subject Management</h3>
+          <p class="text-gray-600">Create and manage subjects</p>
+        </div>
+        
+        <!-- Create Subject Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Create New Subject</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Subject Name</label>
+              <input type="text" id="subjectName" placeholder="e.g., Mathematics" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Subject Code</label>
+              <input type="text" id="subjectCode" placeholder="e.g., MATH101" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div class="flex items-end">
+              <button id="createSubjectBtn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                Create Subject
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Subject List -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h4 class="text-lg font-semibold text-gray-800">All Subjects</h4>
+            <button id="refreshSubjects" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+              <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Subject ID</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Subject Name</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Subject Code</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Classes</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="subjectsTable">
+                <!-- Subjects will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Assignments Tab -->
+      <div id="assignments" class="tab-content hidden">
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800">Assignments</h3>
+          <p class="text-gray-600">Assign students and teachers to classes</p>
+        </div>
+        
+        <!-- Assign Student to Class -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Assign Student to Class</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select Student</label>
+              <select id="studentSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Choose a student</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
+              <select id="classSelectStudent" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Choose a class</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button id="assignStudentBtn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                Assign Student
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Assign Teacher to Class -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Assign Teacher to Class & Subject</h4>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select Teacher</label>
+              <select id="teacherSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Choose a teacher</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
+              <select id="classSelectTeacher" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Choose a class</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select Subject</label>
+              <select id="subjectSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Choose a subject</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button id="assignTeacherBtn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                Assign Teacher
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Reports Tab -->
+      <div id="reports" class="tab-content hidden">
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800">Reports</h3>
+          <p class="text-gray-600">View system reports and analytics</p>
+        </div>
+        
+        <!-- Report Filters -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Generate Report</h4>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+              <select id="reportType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="attendance">Attendance Report</option>
+                <option value="users">User Report</option>
+                <option value="classes">Class Report</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <input type="date" id="startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <input type="date" id="endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div class="flex items-end">
+              <button id="generateReportBtn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                Generate Report
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Report Results -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h4 class="text-lg font-semibold text-gray-800">Report Results</h4>
+            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+              <i class="fas fa-download mr-2"></i>Export PDF
+            </button>
+          </div>
+          <div id="reportResults" class="text-center py-12 text-gray-500">
+            <i class="fas fa-chart-bar text-4xl mb-4 opacity-50"></i>
+            <p>Select filters and generate a report to view results</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Check authentication
+    if (!checkAuth('admin')) {
+      window.location.href = 'index.html';
+    }
+    
+    // Initialize admin dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      const currentUser = getSession();
+      if (currentUser) {
+        document.getElementById('adminName').textContent = currentUser.name || 'Admin User';
+      }
+      
+      // Update date and time
+      updateDateTime();
+      setInterval(updateDateTime, 60000);
+      
+      // Load dashboard data
+      loadDashboardData();
+      
+      // Setup event listeners
+      setupEventListeners();
+    });
+    
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
+    
+    function setupEventListeners() {
+      
+      
+      // Navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tab = this.getAttribute('data-tab');
+          showTab(tab);
+        });
+      });
+      
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        if (confirm('Are you sure you want to logout?')) {
+          logout();
+        }
+      });
+      
+      // Refresh buttons
+      document.getElementById('refreshUsers').addEventListener('click', loadPendingUsers);
+      document.getElementById('refreshClasses').addEventListener('click', loadClasses);
+      document.getElementById('refreshSubjects').addEventListener('click', loadSubjects);
+      
+      // Create class
+      document.getElementById('createClassBtn').addEventListener('click', createClass);
+      
+      // Create subject
+      document.getElementById('createSubjectBtn').addEventListener('click', createSubject);
+      
+      // Assignments
+      document.getElementById('assignStudentBtn').addEventListener('click', assignStudentToClass);
+      document.getElementById('assignTeacherBtn').addEventListener('click', assignTeacherToClass);
+      
+      // Report generation
+      document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+
+      // ✅ YEH LINE ADD KARO (setupEventListeners function mein)
+document.getElementById('userFilter').addEventListener('change', function() {
+  loadAllUsers(); // Filter automatically apply hoga
+});
+    }
+    
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+      
+      // Remove active class from all nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active-tab');
+        item.classList.add('text-gray-700', 'hover:bg-gray-100');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName).classList.remove('hidden');
+      
+      // Add active class to selected nav item
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active-tab');
+      document.querySelector(`[data-tab="${tabName}"]`).classList.remove('text-gray-700', 'hover:bg-gray-100');
+      
+      // Update page title
+      const titles = {
+        dashboard: 'Dashboard',
+        users: 'User Management',
+        classes: 'Class Management',
+        subjects: 'Subject Management',
+        assignments: 'Assignments',
+        reports: 'Reports'
+      };
+      
+      document.getElementById('pageTitle').textContent = titles[tabName];
+      document.getElementById('pageSubtitle').textContent = `Manage ${tabName.toLowerCase()} in the system`;
+      
+      // Load tab-specific data
+      if (tabName === 'users') {
+        loadPendingUsers();
+        loadAllUsers();
+      } else if (tabName === 'classes') {
+        loadClasses();
+      } else if (tabName === 'subjects') {
+        loadSubjects();
+      } else if (tabName === 'assignments') {
+        loadAssignmentData();
+      }
+    }
+    
+    async function loadDashboardData() {
+      try {
+        // Load stats
+        const students = await getAllStudents();
+        const teachers = await getAllTeachers();
+        const classes = await getAllClasses();
+        const pendingUsers = await getPendingUsers();
+        
+        document.getElementById('totalStudents').textContent = students.length;
+        document.getElementById('totalTeachers').textContent = teachers.length;
+        document.getElementById('totalClasses').textContent = classes.length;
+        document.getElementById('pendingApprovals').textContent = pendingUsers.length;
+        
+        // Calculate changes (mock data for demo)
+        document.getElementById('studentChange').textContent = '+12';
+        document.getElementById('teacherChange').textContent = '+3';
+        document.getElementById('classChange').textContent = '+2';
+        
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+      }
+    }
+    
+    async function loadPendingUsers() {
+      try {
+        const pendingUsers = await getPendingUsers();
+        const tableBody = document.getElementById('pendingUsersTable');
+        
+        if (pendingUsers.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="7" class="py-8 text-center text-gray-500">
+                <i class="fas fa-check-circle text-2xl mb-2 opacity-50"></i>
+                <p>No pending approvals</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+       tableBody.innerHTML = pendingUsers.map(user => `
+  <tr class="border-b border-gray-100 hover:bg-gray-50">
+    <td class="py-3 px-4 text-sm">${user._id || user.id}</td>
+    <td class="py-3 px-4 text-sm font-medium">${user.firstName + ' ' + user.lastName}</td>
+    <td class="py-3 px-4 text-sm">${user.email}</td>
+    <td class="py-3 px-4 text-sm">${user.phone}</td>
+    <td class="py-3 px-4 text-sm">
+      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs capitalize">${user.role}</span>
+    </td>
+    <td class="py-3 px-4 text-sm text-gray-500">${user.createdAt ? formatDate(user.createdAt) : 'N/A'}</td>
+    <td class="py-3 px-4 text-sm">
+      <div class="flex space-x-2">
+        <button onclick="handleApproveUser('${user._id || user.id}')" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-xs">
+          Approve
+        </button>
+        <button onclick="handleRejectUser('${user._id || user.id}')" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
+          Reject
+        </button>
+      </div>
+    </td>
+  </tr>
+`).join('');
+      } catch (error) {
+        console.error('Failed to load pending users:', error);
+      }
+    }
+    
+   async function loadAllUsers() {
+  try {
+    const allUsers = await getAllUsers();
+    const tableBody = document.getElementById('allUsersTable');
+    
+    if (allUsers.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="py-8 text-center text-gray-500">
+            <i class="fas fa-users text-2xl mb-2 opacity-50"></i>
+            <p>No users found</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    tableBody.innerHTML = allUsers.map(user => `
+      <tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="py-3 px-4 text-sm">${user._id}</td>
+        <td class="py-3 px-4 text-sm font-medium">${user.firstName + ' ' + user.lastName}</td>
+        <td class="py-3 px-4 text-sm">${user.email}</td>
+        <td class="py-3 px-4 text-sm">${user.phone}</td>
+        <td class="py-3 px-4 text-sm">
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs capitalize">${user.role}</span>
+        </td>
+        <td class="py-3 px-4 text-sm">
+          <span class="px-2 py-1 ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} rounded-full text-xs">
+            ${user.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td class="py-3 px-4 text-sm">
+          <div class="flex space-x-2">
+            ${!user.isActive && user.role !== 'admin' ? `
+              <button onclick="handleApproveUser('${user._id}')" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-xs">
+                Approve
+              </button>
+            ` : ''}
+            <button onclick="handleDeleteUser('${user._id}')" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    
+  } catch (error) {
+    console.error('Failed to load all users:', error);
+    document.getElementById('allUsersTable').innerHTML = `
+      <tr>
+        <td colspan="7" class="py-8 text-center text-gray-500">
+          <i class="fas fa-exclamation-triangle text-2xl mb-2 opacity-50"></i>
+          <p>Failed to load users</p>
+        </td>
+      </tr>
+    `;
+  }
+}
+    
+    async function loadClasses() {
+      try {
+        const classes = await getAllClasses();
+        const tableBody = document.getElementById('classesTable');
+        
+        if (classes.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="7" class="py-8 text-center text-gray-500">
+                <i class="fas fa-school text-2xl mb-2 opacity-50"></i>
+                <p>No classes found</p>
+                <p class="text-sm mt-1">Create your first class to get started</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        tableBody.innerHTML = classes.map(cls => `
+          <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="py-3 px-4 text-sm font-medium">${cls.id}</td>
+            <td class="py-3 px-4 text-sm">${cls.name}</td>
+            <td class="py-3 px-4 text-sm">${cls.section}</td>
+            <td class="py-3 px-4 text-sm">${cls.studentCount || 0}</td>
+            <td class="py-3 px-4 text-sm">${cls.teacherCount || 0}</td>
+            <td class="py-3 px-4 text-sm text-gray-500">${formatDate(cls.createdAt)}</td>
+            <td class="py-3 px-4 text-sm">
+              <div class="flex space-x-2">
+                <button class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs">
+                  Edit
+                </button>
+                <button class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load classes:', error);
+      }
+    }
+    
+    async function loadSubjects() {
+      try {
+        const subjects = await getAllSubjects();
+        const tableBody = document.getElementById('subjectsTable');
+        
+        if (subjects.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="py-8 text-center text-gray-500">
+                <i class="fas fa-book text-2xl mb-2 opacity-50"></i>
+                <p>No subjects found</p>
+                <p class="text-sm mt-1">Create your first subject to get started</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        tableBody.innerHTML = subjects.map(subject => `
+          <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="py-3 px-4 text-sm font-medium">${subject.id}</td>
+            <td class="py-3 px-4 text-sm">${subject.name}</td>
+            <td class="py-3 px-4 text-sm">${subject.code}</td>
+            <td class="py-3 px-4 text-sm">${subject.classCount || 0}</td>
+            <td class="py-3 px-4 text-sm text-gray-500">${formatDate(subject.createdAt)}</td>
+            <td class="py-3 px-4 text-sm">
+              <div class="flex space-x-2">
+                <button class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs">
+                  Edit
+                </button>
+                <button class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load subjects:', error);
+      }
+    }
+    
+    async function loadAssignmentData() {
+      try {
+        const students = await getAllStudents();
+        const teachers = await getAllTeachers();
+        const classes = await getAllClasses();
+        const subjects = await getAllSubjects();
+        
+        // Populate student dropdown
+        const studentSelect = document.getElementById('studentSelect');
+        studentSelect.innerHTML = '<option value="">Choose a student</option>' +
+          students.filter(s => !s.classId).map(s => 
+            `<option value="${s.id}">${s.name} (${s.id})</option>`
+          ).join('');
+        
+        // Populate teacher dropdown
+        const teacherSelect = document.getElementById('teacherSelect');
+        teacherSelect.innerHTML = '<option value="">Choose a teacher</option>' +
+          teachers.map(t => 
+            `<option value="${t.id}">${t.name} (${t.id})</option>`
+          ).join('');
+        
+        // Populate class dropdowns
+        const classOptions = classes.map(c => 
+          `<option value="${c.id}">${c.name} - ${c.section}</option>`
+        ).join('');
+        
+        document.getElementById('classSelectStudent').innerHTML = '<option value="">Choose a class</option>' + classOptions;
+        document.getElementById('classSelectTeacher').innerHTML = '<option value="">Choose a class</option>' + classOptions;
+        
+        // Populate subject dropdown
+        const subjectSelect = document.getElementById('subjectSelect');
+        subjectSelect.innerHTML = '<option value="">Choose a subject</option>' +
+          subjects.map(s => 
+            `<option value="${s.id}">${s.name} (${s.code})</option>`
+          ).join('');
+          
+      } catch (error) {
+        console.error('Failed to load assignment data:', error);
+      }
+    }
+    
+    async function createClass() {
+      const className = document.getElementById('className').value.trim();
+      const section = document.getElementById('classSection').value.trim();
+      
+      if (!className || !section) {
+        alert('Please enter both class name and section');
+        return;
+      }
+      
+      const success = await window.createClass(className, section);
+      if (success) {
+        alert('Class created successfully!');
+        document.getElementById('className').value = '';
+        document.getElementById('classSection').value = '';
+        loadClasses();
+      } else {
+        alert('Failed to create class. Please try again.');
+      }
+    }
+    
+    async function createSubject() {
+      const subjectName = document.getElementById('subjectName').value.trim();
+      const subjectCode = document.getElementById('subjectCode').value.trim();
+      
+      if (!subjectName || !subjectCode) {
+        alert('Please enter both subject name and code');
+        return;
+      }
+      
+      const success = await window.createSubject(subjectName, subjectCode);
+      if (success) {
+        alert('Subject created successfully!');
+        document.getElementById('subjectName').value = '';
+        document.getElementById('subjectCode').value = '';
+        loadSubjects();
+      } else {
+        alert('Failed to create subject. Please try again.');
+      }
+    }
+    
+    async function assignStudentToClass() {
+      const studentId = document.getElementById('studentSelect').value;
+      const classId = document.getElementById('classSelectStudent').value;
+      
+      if (!studentId || !classId) {
+        alert('Please select both student and class');
+        return;
+      }
+      
+      const success = await window.assignStudentToClass(studentId, classId);
+      if (success) {
+        alert('Student assigned to class successfully!');
+        loadAssignmentData();
+      } else {
+        alert('Failed to assign student. Please try again.');
+      }
+    }
+    
+    async function assignTeacherToClass() {
+      const teacherId = document.getElementById('teacherSelect').value;
+      const classId = document.getElementById('classSelectTeacher').value;
+      const subjectId = document.getElementById('subjectSelect').value;
+      
+      if (!teacherId || !classId || !subjectId) {
+        alert('Please select teacher, class, and subject');
+        return;
+      }
+      
+      const success = await window.assignTeacherToClass(teacherId, classId, subjectId);
+      if (success) {
+        alert('Teacher assigned to class and subject successfully!');
+        loadAssignmentData();
+      } else {
+        alert('Failed to assign teacher. Please try again.');
+      }
+    }
+    
+    async function generateReport() {
+      const reportType = document.getElementById('reportType').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      
+      if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+      }
+      
+      // Mock report generation for demo
+      const reportResults = document.getElementById('reportResults');
+      reportResults.innerHTML = `
+        <div class="text-left">
+          <h5 class="text-lg font-semibold mb-4">${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report</h5>
+          <p class="text-sm text-gray-600 mb-4">Period: ${startDate} to ${endDate}</p>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm">Report generation is a premium feature. In a full implementation, this would generate detailed analytics and charts based on the selected criteria.</p>
+          </div>
+        </div>
+      `;
+    }
+    
+  async function handleApproveUser(userId) {
+  if (confirm('Are you sure you want to approve this user?')) {
+    console.log('🔄 Approving user:', userId);
+    const success = await window.approveUser(userId);
+    if (success) {
+      alert('User approved successfully!');
+      loadPendingUsers();
+      loadDashboardData();
+      loadAllUsers();
+    } else {
+      alert('Failed to approve user. Please try again.');
+    }
+  }
+}
+
+// ✅ ADD THIS AFTER approveUser FUNCTION
+window.rejectUser = async function(userId) {
+  try {
+    const result = await apiCall('/admin/reject-user', {
+      method: 'POST',
+      body: JSON.stringify({ userId })
+    });
+    console.log('❌ Reject result:', result);
+    return result.success;
+  } catch (error) {
+    console.error('Failed to reject user:', error);
+    return false;
+  }
+};
+
+async function handleDeleteUser(userId) {
+  if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    console.log('🗑️ Deleting user:', userId);
+    const success = await window.deleteUser(userId);
+    if (success) {
+      alert('User deleted successfully!');
+      loadAllUsers();
+      loadDashboardData();
+    } else {
+      alert('Failed to delete user. Please try again.');
+    }
+  }
+}
+
+
+async function handleRejectUser(userId) {
+  if (confirm('Are you sure you want to reject this user?')) {
+    console.log('🔄 Rejecting user:', userId);
+    const success = await window.rejectUser(userId);
+    if (success) {
+      alert('User rejected successfully!');
+      loadPendingUsers();
+      loadDashboardData();
+    } else {
+      alert('Failed to reject user. Please try again.');
+    }
+  }
+}
+
+// ✅ FORMAT DATE FUNCTION ADD KARO
+function formatDate(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+  </script>
+</body>
+</html>
