@@ -338,61 +338,6 @@
           <!-- Recent Activity & Quick Actions -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Recent Activity -->
-            <div
-              class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-            >
-              <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-semibold text-gray-800">
-                  Recent Activity
-                </h3>
-                <button
-                  class="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  View All
-                </button>
-              </div>
-              <div class="space-y-4" id="recentActivity">
-                <div class="flex items-start space-x-3">
-                  <div
-                    class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1"
-                  >
-                    <i class="fas fa-user-plus text-green-600 text-xs"></i>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-800">
-                      New teacher registration: John Smith
-                    </p>
-                    <p class="text-xs text-gray-500">2 hours ago</p>
-                  </div>
-                </div>
-                <div class="flex items-start space-x-3">
-                  <div
-                    class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1"
-                  >
-                    <i class="fas fa-school text-blue-600 text-xs"></i>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-800">
-                      New class created: Grade 10-A
-                    </p>
-                    <p class="text-xs text-gray-500">5 hours ago</p>
-                  </div>
-                </div>
-                <div class="flex items-start space-x-3">
-                  <div
-                    class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mt-1"
-                  >
-                    <i class="fas fa-book text-purple-600 text-xs"></i>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-800">
-                      New subject added: Mathematics
-                    </p>
-                    <p class="text-xs text-gray-500">1 day ago</p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Quick Actions -->
             <div
@@ -1066,10 +1011,10 @@
         // Assignments
         document
           .getElementById("assignStudentBtn")
-          .addEventListener("click", assignStudentToClass);
+          .addEventListener("click", handleAssignStudent);
         document
           .getElementById("assignTeacherBtn")
-          .addEventListener("click", assignTeacherToClass);
+          .addEventListener("click", handleAssignTeacher);
 
         // Report generation
         document
@@ -1407,80 +1352,90 @@
         }
       }
 
-async function loadAssignmentData() {
-  try {
-    const students = await getAllStudents();
-    const teachers = await getAllTeachers();
-    const classes = await getAllClasses();
-    const subjects = await getAllSubjects();
-    
-    console.log('📋 Students data:', students);
-    console.log('👨‍🏫 Teachers data:', teachers);
-    
-    // ✅ FIX STUDENT DROPDOWN
-    const studentSelect = document.getElementById('studentSelect');
-    studentSelect.innerHTML = '<option value="">Choose a student</option>';
-    
-    students.forEach(student => {
-      const option = document.createElement('option');
-      option.value = student._id;
-      option.textContent = `${student.firstName} ${student.lastName} (${student.studentId || 'No ID'})`;
-      studentSelect.appendChild(option);
-    });
-    
-    // ✅ FIX TEACHER DROPDOWN  
-    const teacherSelect = document.getElementById('teacherSelect');
-    teacherSelect.innerHTML = '<option value="">Choose a teacher</option>';
-    
-    teachers.forEach(teacher => {
-      const option = document.createElement('option');
-      option.value = teacher._id;
-      option.textContent = `${teacher.firstName} ${teacher.lastName} (${teacher.teacherId || 'No ID'})`;
-      teacherSelect.appendChild(option);
-    });
-    
-    // ✅ FIX CLASS DROPDOWNS
-    const classOptions = classes.map(cls => 
-      `<option value="${cls._id}">${cls.name} - ${cls.section}</option>`
-    ).join('');
-    
-    document.getElementById('classSelectStudent').innerHTML = '<option value="">Choose a class</option>' + classOptions;
-    document.getElementById('classSelectTeacher').innerHTML = '<option value="">Choose a class</option>' + classOptions;
-    
-    // ✅ FIX SUBJECT DROPDOWN
-    const subjectSelect = document.getElementById('subjectSelect');
-    subjectSelect.innerHTML = '<option value="">Choose a subject</option>';
-    
-    subjects.forEach(subject => {
-      const option = document.createElement('option');
-      option.value = subject._id;
-      option.textContent = `${subject.name} (${subject.code})`;
-      subjectSelect.appendChild(option);
-    });
-    
-  } catch (error) {
-    console.error('❌ Failed to load assignment data:', error);
-    
-    // ✅ FALLBACK DATA - अगर API fail हो तो
-    const studentSelect = document.getElementById('studentSelect');
-    const teacherSelect = document.getElementById('teacherSelect');
-    
-    studentSelect.innerHTML = `
+      async function loadAssignmentData() {
+        try {
+          const students = await getAllStudents();
+          const teachers = await getAllTeachers();
+          const classes = await getAllClasses();
+          const subjects = await getAllSubjects();
+
+          console.log("📋 Students data:", students);
+          console.log("👨‍🏫 Teachers data:", teachers);
+
+          // ✅ FIX STUDENT DROPDOWN
+          const studentSelect = document.getElementById("studentSelect");
+          studentSelect.innerHTML =
+            '<option value="">Choose a student</option>';
+
+          students.forEach((student) => {
+            const option = document.createElement("option");
+            option.value = student._id;
+            option.textContent = `${student.firstName} ${student.lastName} (${
+              student.studentId || "No ID"
+            })`;
+            studentSelect.appendChild(option);
+          });
+
+          // ✅ FIX TEACHER DROPDOWN
+          const teacherSelect = document.getElementById("teacherSelect");
+          teacherSelect.innerHTML =
+            '<option value="">Choose a teacher</option>';
+
+          teachers.forEach((teacher) => {
+            const option = document.createElement("option");
+            option.value = teacher._id;
+            option.textContent = `${teacher.firstName} ${teacher.lastName} (${
+              teacher.teacherId || "No ID"
+            })`;
+            teacherSelect.appendChild(option);
+          });
+
+          // ✅ FIX CLASS DROPDOWNS
+          const classOptions = classes
+            .map(
+              (cls) =>
+                `<option value="${cls._id}">${cls.name} - ${cls.section}</option>`
+            )
+            .join("");
+
+          document.getElementById("classSelectStudent").innerHTML =
+            '<option value="">Choose a class</option>' + classOptions;
+          document.getElementById("classSelectTeacher").innerHTML =
+            '<option value="">Choose a class</option>' + classOptions;
+
+          // ✅ FIX SUBJECT DROPDOWN
+          const subjectSelect = document.getElementById("subjectSelect");
+          subjectSelect.innerHTML =
+            '<option value="">Choose a subject</option>';
+
+          subjects.forEach((subject) => {
+            const option = document.createElement("option");
+            option.value = subject._id;
+            option.textContent = `${subject.name} (${subject.code})`;
+            subjectSelect.appendChild(option);
+          });
+        } catch (error) {
+          console.error("❌ Failed to load assignment data:", error);
+
+          // ✅ FALLBACK DATA - अगर API fail हो तो
+          const studentSelect = document.getElementById("studentSelect");
+          const teacherSelect = document.getElementById("teacherSelect");
+
+          studentSelect.innerHTML = `
       <option value="">Choose a student</option>
       <option value="student1">Rahul Kumar (S001)</option>
       <option value="student2">Priya Singh (S002)</option>
       <option value="student3">Amit Sharma (S003)</option>
     `;
-    
-    teacherSelect.innerHTML = `
+
+          teacherSelect.innerHTML = `
       <option value="">Choose a teacher</option>
       <option value="teacher1">Mr. Verma (T001)</option>
       <option value="teacher2">Ms. Gupta (T002)</option>
     `;
-  }
-}
+        }
+      }
 
-       
       async function createClass() {
         try {
           const className = document.getElementById("className").value.trim();
@@ -1524,7 +1479,7 @@ async function loadAssignmentData() {
         }
       }
 
-      async function assignStudentToClass() {
+      async function handleAssignStudent() {
         const studentId = document.getElementById("studentSelect").value;
         const classId = document.getElementById("classSelectStudent").value;
 
@@ -1542,7 +1497,7 @@ async function loadAssignmentData() {
         }
       }
 
-      async function assignTeacherToClass() {
+      async function handleAssignTeacher() {
         const teacherId = document.getElementById("teacherSelect").value;
         const classId = document.getElementById("classSelectTeacher").value;
         const subjectId = document.getElementById("subjectSelect").value;

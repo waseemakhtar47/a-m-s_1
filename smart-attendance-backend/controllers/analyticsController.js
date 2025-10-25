@@ -54,18 +54,7 @@ exports.getAnalyticsData = async (req, res) => {
       })
     );
 
-    // Recent activity
-    const recentActivity = await Attendance.find()
-      .populate('student', 'firstName lastName')
-      .populate('subject', 'name')
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .then(records => records.map(record => ({
-        studentName: `${record.student.firstName} ${record.student.lastName}`,
-        subjectName: record.subject.name,
-        status: record.status === 'present' ? 'P' : 'A',
-        time: record.createdAt
-      })));
+
 
     // Class performance
     const classes = await Class.find().populate('students');
@@ -116,7 +105,6 @@ exports.getAnalyticsData = async (req, res) => {
       overallAttendance,
       todayAttendance,
       subjectAttendance,
-      recentActivity,
       classPerformance,
       monthlyTrend
     });
