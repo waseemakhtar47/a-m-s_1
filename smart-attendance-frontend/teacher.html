@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon" type="image/png" href="https://img.icons8.com/ios/50/ffffff/attendance-mark.png">
 
-
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -438,32 +437,6 @@
     }
     
     function setupEventListeners() {
-      // Sidebar toggle
-
-      // Add this function to teacher.html
-async function loadSubjectsForClass(classId) {
-    try {
-        // In a real implementation, this would fetch subjects for the specific class
-        const subjects = await getAllSubjects();
-        const subjectSelect = document.getElementById('attendanceSubject');
-        
-        subjectSelect.innerHTML = '<option value="">Choose a subject</option>' +
-            subjects.map(subject => 
-                `<option value="${subject.id}">${subject.name}</option>`
-            ).join('');
-    } catch (error) {
-        console.error('Failed to load subjects:', error);
-    }
-}
-
-// Update the class selection event listener
-document.getElementById('attendanceClass').addEventListener('change', function() {
-    const classId = this.value;
-    if (classId) {
-        loadSubjectsForClass(classId);
-    }
-});
-      
       // Navigation
       document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function(e) {
@@ -480,6 +453,14 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         }
       });
       
+      // Class selection for subjects
+      document.getElementById('attendanceClass').addEventListener('change', function() {
+        const classId = this.value;
+        if (classId) {
+          loadSubjectsForClass(classId);
+        }
+      });
+      
       // Attendance
       document.getElementById('loadStudentsBtn').addEventListener('click', loadStudentsForAttendance);
       document.getElementById('markAllPresent').addEventListener('click', markAllPresent);
@@ -489,6 +470,20 @@ document.getElementById('attendanceClass').addEventListener('change', function()
       
       // Reports
       document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+    }
+    
+    async function loadSubjectsForClass(classId) {
+      try {
+        const subjects = await getAllSubjects();
+        const subjectSelect = document.getElementById('attendanceSubject');
+        
+        subjectSelect.innerHTML = '<option value="">Choose a subject</option>' +
+            subjects.map(subject => 
+                `<option value="${subject._id}">${subject.name}</option>`
+            ).join('');
+      } catch (error) {
+        console.error('Failed to load subjects:', error);
+      }
     }
     
     function showTab(tabName) {
@@ -539,7 +534,7 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         // Calculate total students across all classes
         let totalStudents = 0;
         for (const cls of classes) {
-          const students = await getStudentsByClass(cls.id);
+          const students = await getStudentsByClass(cls._id);
           totalStudents += students.length;
         }
         document.getElementById('totalStudents').textContent = totalStudents;
@@ -561,7 +556,7 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         
         classSelect.innerHTML = '<option value="">Choose a class</option>' +
           classes.map(cls => 
-            `<option value="${cls.id}">${cls.name} - ${cls.section}</option>`
+            `<option value="${cls._id}">${cls.name} - ${cls.section}</option>`
           ).join('');
           
       } catch (error) {
@@ -586,8 +581,8 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         }
         
         container.innerHTML = await Promise.all(classes.map(async (cls) => {
-          const students = await getStudentsByClass(cls.id);
-          const attendance = await getAttendanceReport(cls.id, null, todayISO(), todayISO());
+          const students = await getStudentsByClass(cls._id);
+          const attendance = await getAttendanceReport(cls._id, null, todayISO(), todayISO());
           
           const presentToday = attendance.filter(a => a.status === 'present').length;
           const attendancePercent = percent(presentToday, students.length);
@@ -621,10 +616,10 @@ document.getElementById('attendanceClass').addEventListener('change', function()
               </div>
               
               <div class="flex space-x-2">
-                <button onclick="showClassDetails('${cls.id}')" class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm">
+                <button onclick="showClassDetails('${cls._id}')" class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm">
                   View Details
                 </button>
-                <button onclick="takeAttendanceForClass('${cls.id}')" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm">
+                <button onclick="takeAttendanceForClass('${cls._id}')" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm">
                   Take Attendance
                 </button>
               </div>
@@ -642,8 +637,14 @@ document.getElementById('attendanceClass').addEventListener('change', function()
       const subjectId = document.getElementById('attendanceSubject').value;
       const date = document.getElementById('attendanceDate').value;
       
-      if (!classId || !subjectId || !date) {
-        alert('Please select class, subject, and date');
+      // ✅ ADD VALIDATION
+      if (!classId || classId === 'undefined') {
+        alert('Please select a valid class');
+        return;
+      }
+      
+      if (!subjectId || !date) {
+        alert('Please select subject and date');
         return;
       }
       
@@ -651,15 +652,26 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         const students = await getStudentsByClass(classId);
         const form = document.getElementById('attendanceForm');
         
+        if (students.length === 0) {
+          form.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+              <i class="fas fa-users text-4xl mb-4 opacity-50"></i>
+              <p>No students found in this class</p>
+              <p class="text-sm mt-1">Contact admin to assign students to this class</p>
+            </div>
+          `;
+          return;
+        }
+        
         form.innerHTML = students.map(student => `
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div class="flex items-center space-x-4">
               <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                ${student.name.charAt(0)}
+                ${student.name ? student.name.charAt(0) : 'S'}
               </div>
               <div>
-                <p class="font-medium text-gray-800">${student.name}</p>
-                <p class="text-sm text-gray-600">${student.id}</p>
+                <p class="font-medium text-gray-800">${student.name || 'Unknown Student'}</p>
+                <p class="text-sm text-gray-600">${student.studentId || 'No ID'}</p>
               </div>
             </div>
             <div class="flex space-x-2">
@@ -683,7 +695,14 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         
       } catch (error) {
         console.error('Failed to load students:', error);
-        alert('Failed to load students. Please try again.');
+        const form = document.getElementById('attendanceForm');
+        form.innerHTML = `
+          <div class="text-center py-12 text-red-500">
+            <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+            <p>Failed to load students</p>
+            <p class="text-sm mt-1">Please try again</p>
+          </div>
+        `;
       }
     }
     
@@ -692,7 +711,7 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         radio.checked = true;
       });
     }
-    
+
     function markAllAbsent() {
       document.querySelectorAll('input[type="radio"][value="absent"]').forEach(radio => {
         radio.checked = true;
@@ -754,7 +773,7 @@ document.getElementById('attendanceClass').addEventListener('change', function()
         
         classSelect.innerHTML = '<option value="">All Classes</option>' +
           classes.map(cls => 
-            `<option value="${cls.id}">${cls.name} - ${cls.section}</option>`
+            `<option value="${cls._id}">${cls.name} - ${cls.section}</option>`
           ).join('');
           
         // Set default date range (last 30 days)

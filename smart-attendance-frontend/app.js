@@ -223,7 +223,7 @@
 window.getPendingUsers = async function() {
   try {
     const result = await apiCall('/admin/pending-users');
-    console.log('📋 Pending users:', result.users);
+    
     return result.users || [];
   } catch (error) {
     console.error('Failed to get pending users:', error);
@@ -238,7 +238,7 @@ window.approveUser = async function(userId) {
       method: 'POST',
       body: JSON.stringify({ userId })
     });
-    console.log('✅ Approve result:', result);
+
     return result.success;
   } catch (error) {
     console.error('Failed to approve user:', error);
@@ -262,7 +262,7 @@ window.approveUser = async function(userId) {
     window.getAllUsers = async function() {
   try {
     const result = await apiCall('/admin/all-users');
-    console.log('📋 All users response:', result);
+   
     return result.users || [];
   } catch (error) {
     console.error('Failed to get all users:', error);
@@ -277,7 +277,7 @@ window.deleteUser = async function(userId) {
       method: 'POST',
       body: JSON.stringify({ userId })
     });
-    console.log('🗑️ Delete result:', result);
+ 
     return result.success;
   } catch (error) {
     console.error('Failed to delete user:', error);

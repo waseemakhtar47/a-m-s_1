@@ -709,14 +709,30 @@ app.get('/api/teacher/classes', async (req, res) => {
 });
 
 // ✅ GET CLASS STUDENTS
+// ✅ GET CLASS STUDENTS - FIXED VERSION
 app.get('/api/teacher/class/:classId/students', async (req, res) => {
   try {
     const { classId } = req.params;
     
-    const classObj = await Class.findById(classId).populate('students');
+    console.log('🔍 Fetching students for class:', classId);
+    
+    // ✅ ADD VALIDATION
+    if (!classId || classId === 'undefined') {
+      return res.json({ 
+        success: false, 
+        error: 'Invalid class ID',
+        students: [] 
+      });
+    }
+    
+    const classObj = await Class.findById(classId).populate('students', 'firstName lastName studentId');
     
     if (!classObj) {
-      return res.json({ success: false, error: 'Class not found', students: [] });
+      return res.json({ 
+        success: false, 
+        error: 'Class not found',
+        students: [] 
+      });
     }
 
     // Format students data
@@ -726,6 +742,8 @@ app.get('/api/teacher/class/:classId/students', async (req, res) => {
       studentId: student.studentId
     }));
 
+    console.log(`✅ Found ${students.length} students in class`);
+    
     res.json({ 
       success: true, 
       students: students 
@@ -733,7 +751,11 @@ app.get('/api/teacher/class/:classId/students', async (req, res) => {
 
   } catch (error) {
     console.error('Get class students error:', error);
-    res.json({ success: false, error: 'Failed to fetch students', students: [] });
+    res.json({ 
+      success: false, 
+      error: 'Failed to fetch students',
+      students: [] 
+    });
   }
 });
 
