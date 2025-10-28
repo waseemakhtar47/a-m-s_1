@@ -2254,18 +2254,6 @@ async function loadStudentAssignments() {
   }
 }
 
-// TEST FUNCTION - Add this and run it in browser console
-async function testStudentClass() {
-  const students = await getAllStudents();
-  console.log('🧪 TEST - Student Class Data:', students);
-  
-  students.forEach(s => {
-    console.log(`Student: ${s.firstName} ${s.lastName}`, 
-                `Class:`, s.class, 
-                `Has Class: ${!!(s.class && s.class._id)}`);
-  });
-}
-
     </script>
   </body>
 </html>
