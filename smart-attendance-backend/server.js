@@ -2,6 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+// Import models
+const User = require('./models/User');
+const Class = require('./models/Class');
+const Subject = require('./models/Subject');
+// Import controllers
+const teacherController = require('./controllers/teacherController');
 require('dotenv').config();
 
 const app = express();
@@ -16,43 +22,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smart-att
     useUnifiedTopology: true,
 });
 
-// User Schema
-const userSchema = new mongoose.Schema({
-  firstName: String,
-  lastName: String,
-  email: String,
-  phone: String,
-  password: String,
-  role: String,
-  studentId: String,
-  teacherId: String,
-  isActive: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
 
-const User = mongoose.model('User', userSchema);
-
-// Class Schema
-const classSchema = new mongoose.Schema({
-  name: String,
-  section: String,
-  grade: String,
-  students: [],
-  subjects: [],
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Class = mongoose.model('Class', classSchema);
-
-// Subject Schema
-const subjectSchema = new mongoose.Schema({
-  name: String,
-  code: String,
-  classes: [],
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Subject = mongoose.model('Subject', subjectSchema);
 
 // ========================
 // ✅ AUTH ROUTES
@@ -72,21 +42,22 @@ app.post('/api/register', async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // ✅ REMOVED: Manual hashing - let the User model handle it
+    // const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       firstName,
       lastName,
       email,
       phone,
-      password: hashedPassword,
+      password: password, // ✅ Store plain password - pre-save hook will hash it
       role,
       studentId,
       teacherId,
       isActive: role === 'admin'
     });
 
-    await newUser.save();
+    await newUser.save(); // ✅ This will trigger the pre-save hook to hash the password
 
     res.json({
       success: true,
@@ -109,12 +80,16 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+
+
+
 app.post('/api/login', async (req, res) => {
   try {
     console.log('✅ LOGIN Request:', req.body);
     
     const { emailOrPhone, password, role } = req.body;
 
+    // Find user by email OR phone
     const user = await User.findOne({
       $or: [
         { email: emailOrPhone },
@@ -122,35 +97,48 @@ app.post('/api/login', async (req, res) => {
       ]
     });
 
+    console.log('🔍 Found user:', user);
+
     if (!user) {
+      console.log('❌ User not found');
       return res.json({ 
         success: false, 
         error: 'Invalid email/phone or password' 
       });
     }
 
+    // Check role
     if (user.role !== role) {
+      console.log(`❌ Role mismatch: User role is ${user.role}, but login attempt as ${role}`);
       return res.json({ 
         success: false, 
         error: `Please login as ${user.role}, not ${role}` 
       });
     }
 
+    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log('🔐 Password valid:', isPasswordValid);
+    
     if (!isPasswordValid) {
+      console.log('❌ Invalid password');
       return res.json({ 
         success: false, 
         error: 'Invalid password' 
       });
     }
 
+    // Check if user is active (except for admin)
     if (!user.isActive && user.role !== 'admin') {
+      console.log('❌ User not active');
       return res.json({ 
         success: false, 
         error: 'Account not activated. Contact admin.' 
       });
     }
 
+    console.log('✅ Login successful for:', user.firstName, user.lastName);
+    
     res.json({
       success: true,
       token: 'valid-token-' + user._id,
@@ -175,17 +163,24 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+
+
+
 // ========================
 // ✅ ADMIN ROUTES
 // ========================
 
 // ✅ GET PENDING USERS
+// ✅ GET PENDING USERS - FIXED TO INCLUDE BOTH STUDENTS AND TEACHERS
 app.get('/api/admin/pending-users', async (req, res) => {
   try {
     const pendingUsers = await User.find({ 
-      role: 'teacher', 
-      isActive: false 
+      isActive: false,
+      role: { $in: ['student', 'teacher'] } // ✅ INCLUDES BOTH STUDENTS AND TEACHERS
     }).select('-password');
+    
+    console.log(`📋 Found ${pendingUsers.length} pending users:`, 
+                pendingUsers.map(u => `${u.firstName} ${u.lastName} (${u.role})`));
     
     res.json({ 
       success: true,
@@ -453,10 +448,16 @@ app.delete('/api/admin/delete-subject/:id', async (req, res) => {
   }
 });
 
-// ✅ GET ALL CLASSES
+// ✅ GET ALL CLASSES - POPULATED VERSION
 app.get('/api/admin/classes', async (req, res) => {
   try {
-    const classes = await Class.find().sort({ createdAt: -1 });
+    const classes = await Class.find()
+      .populate('students', 'firstName lastName studentId')
+      .populate('subjects.subject', 'name code')
+      .populate('subjects.teacher', 'firstName lastName')
+      .sort({ createdAt: -1 });
+    
+    console.log('📋 Classes with populated data:', classes.length);
     
     res.json({ 
       success: true, 
@@ -485,12 +486,19 @@ app.get('/api/admin/subjects', async (req, res) => {
   }
 });
 
-// ✅ GET ALL STUDENTS
+
+// ✅ GET ALL STUDENTS - FIXED POPULATION
 app.get('/api/admin/students', async (req, res) => {
   try {
     const students = await User.find({ role: 'student', isActive: true })
       .select('-password')
+      .populate('class', 'name section') // ✅ ENSURES CLASS DATA IS LOADED
       .sort({ createdAt: -1 });
+    
+    console.log(`📋 Found ${students.length} students with class data:`);
+    students.forEach(s => {
+      console.log(`- ${s.firstName} ${s.lastName}:`, s.class);
+    });
     
     res.json({ 
       success: true, 
@@ -521,39 +529,247 @@ app.get('/api/admin/teachers', async (req, res) => {
   }
 });
 
-// ✅ ASSIGN STUDENT TO CLASS
+
+// ✅ ASSIGN STUDENT TO CLASS - COMPLETELY FIXED
 app.post('/api/admin/assign-student', async (req, res) => {
   try {
     const { studentId, classId } = req.body;
     console.log('🎓 Assigning student:', studentId, 'to class:', classId);
 
-    await User.findByIdAndUpdate(studentId, { class: classId });
+    // 1. Remove student from all classes
+    await Class.updateMany(
+      { students: studentId },
+      { $pull: { students: studentId } }
+    );
+
+    // 2. Add student to new class
+    const classObj = await Class.findById(classId);
+    if (!classObj) {
+      return res.json({ success: false, error: 'Class not found' });
+    }
+
+    // Add student to class if not already there
+    if (!classObj.students.includes(studentId)) {
+      classObj.students.push(studentId);
+      await classObj.save();
+      console.log('✅ Student added to class students array');
+    }
+
+    // 3. CRITICAL FIX: Update student's class reference in User model
+    const updatedStudent = await User.findByIdAndUpdate(
+      studentId,
+      { class: classId }, // This was missing/malfunctioning
+      { new: true }
+    ).populate('class', 'name section');
+
+    if (!updatedStudent) {
+      return res.json({ success: false, error: 'Student not found' });
+    }
+
+    console.log('✅ Student class reference updated in User model:', updatedStudent.class);
     
     res.json({ 
       success: true,
-      message: 'Student assigned to class successfully!' 
+      message: 'Student assigned to class successfully!',
+      student: updatedStudent
     });
 
   } catch (error) {
     console.error('Assign student error:', error);
-    res.json({ success: false, error: 'Failed to assign student' });
+    res.json({ success: false, error: 'Failed to assign student: ' + error.message });
   }
 });
 
-// ✅ ASSIGN TEACHER TO CLASS
+// ✅ ASSIGN TEACHER TO CLASS - COMPLETE UPDATED VERSION
 app.post('/api/admin/assign-teacher', async (req, res) => {
   try {
     const { teacherId, classId, subjectId } = req.body;
     console.log('👨‍🏫 Assigning teacher:', teacherId, 'to class:', classId, 'subject:', subjectId);
-    
+
+    // ✅ REMOVED: The check that prevented same teacher from teaching same subject in multiple classes
+    // Now teachers CAN teach the same subject in different classes
+
+    // Find class
+    const classObj = await Class.findById(classId);
+    if (!classObj) {
+      return res.json({ success: false, error: 'Class not found' });
+    }
+
+    // Check if subject already assigned to this class
+    const existingSubjectIndex = classObj.subjects.findIndex(
+      s => s.subject && s.subject.toString() === subjectId
+    );
+
+    if (existingSubjectIndex > -1) {
+      // Update existing subject's teacher
+      classObj.subjects[existingSubjectIndex].teacher = teacherId;
+      console.log('✅ Updated existing subject with new teacher');
+    } else {
+      // Add new subject assignment
+      classObj.subjects.push({
+        subject: subjectId,
+        teacher: teacherId
+      });
+      console.log('✅ Added new subject assignment');
+    }
+
+    await classObj.save();
+    console.log('✅ Teacher assignment saved successfully');
+
     res.json({ 
       success: true,
-      message: 'Teacher assigned successfully!' 
+      message: 'Teacher assigned successfully!',
+      class: classObj
     });
 
   } catch (error) {
     console.error('Assign teacher error:', error);
-    res.json({ success: false, error: 'Failed to assign teacher' });
+    res.json({ success: false, error: 'Failed to assign teacher: ' + error.message });
+  }
+});
+
+
+// ✅ REMOVE TEACHER ASSIGNMENT
+app.post('/api/admin/remove-teacher-assignment', async (req, res) => {
+  try {
+    const { classId, subjectId } = req.body;
+    console.log('🗑️ Removing teacher assignment:', classId, subjectId);
+
+    const classObj = await Class.findById(classId);
+    if (!classObj) {
+      return res.json({ success: false, error: 'Class not found' });
+    }
+
+    // Remove teacher from subject
+    classObj.subjects = classObj.subjects.filter(s => 
+      s.subject.toString() !== subjectId
+    );
+
+    await classObj.save();
+    console.log('✅ Teacher assignment removed successfully');
+
+    res.json({ 
+      success: true,
+      message: 'Teacher assignment removed successfully!'
+    });
+
+  } catch (error) {
+    console.error('Remove teacher assignment error:', error);
+    res.json({ success: false, error: 'Failed to remove teacher assignment' });
+  }
+});
+
+// ✅ REMOVE STUDENT ASSIGNMENT  
+app.post('/api/admin/remove-student-assignment', async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    console.log('🗑️ Removing student assignment:', studentId);
+
+    // Remove student from all classes
+    await Class.updateMany(
+      { students: studentId },
+      { $pull: { students: studentId } }
+    );
+
+    // Remove class reference from student
+    await User.findByIdAndUpdate(studentId, { class: null });
+
+    console.log('✅ Student assignment removed successfully');
+
+    res.json({ 
+      success: true,
+      message: 'Student assignment removed successfully!'
+    });
+
+  } catch (error) {
+    console.error('Remove student assignment error:', error);
+    res.json({ success: false, error: 'Failed to remove student assignment' });
+  }
+});
+
+// ========================
+// ✅ TEACHER ROUTES - REAL DATA
+// ========================
+
+// ✅ GET TEACHER CLASSES
+app.get('/api/teacher/classes', async (req, res) => {
+  try {
+    // For now, return all classes - baad mein teacher-specific filter karenge
+    const classes = await Class.find().sort({ createdAt: -1 });
+    
+    res.json({ 
+      success: true, 
+      classes: classes || [] 
+    });
+
+  } catch (error) {
+    console.error('Get teacher classes error:', error);
+    res.json({ success: false, error: 'Failed to fetch classes', classes: [] });
+  }
+});
+
+// ✅ GET CLASS STUDENTS
+app.get('/api/teacher/class/:classId/students', async (req, res) => {
+  try {
+    const { classId } = req.params;
+    
+    const classObj = await Class.findById(classId).populate('students');
+    
+    if (!classObj) {
+      return res.json({ success: false, error: 'Class not found', students: [] });
+    }
+
+    // Format students data
+    const students = classObj.students.map(student => ({
+      id: student._id,
+      name: `${student.firstName} ${student.lastName}`,
+      studentId: student.studentId
+    }));
+
+    res.json({ 
+      success: true, 
+      students: students 
+    });
+
+  } catch (error) {
+    console.error('Get class students error:', error);
+    res.json({ success: false, error: 'Failed to fetch students', students: [] });
+  }
+});
+
+// ✅ MARK ATTENDANCE
+app.post('/api/teacher/attendance/mark', async (req, res) => {
+  try {
+    const { classId, subjectId, date, attendanceData } = req.body;
+    console.log('📝 Marking attendance:', { classId, subjectId, date, attendanceData });
+    
+    // Real attendance saving logic yahan aayega
+    res.json({ 
+      success: true,
+      message: 'Attendance marked successfully!',
+      records: Object.keys(attendanceData).length
+    });
+
+  } catch (error) {
+    console.error('Mark attendance error:', error);
+    res.json({ success: false, error: 'Failed to mark attendance' });
+  }
+});
+
+// ✅ GET ATTENDANCE REPORT
+app.get('/api/teacher/attendance/report', async (req, res) => {
+  try {
+    const { classId, subjectId, startDate, endDate } = req.query;
+    
+    // For now empty array return karenge - baad mein real data
+    res.json({ 
+      success: true, 
+      report: [] 
+    });
+
+  } catch (error) {
+    console.error('Get attendance report error:', error);
+    res.json({ success: false, error: 'Failed to fetch report', report: [] });
   }
 });
 

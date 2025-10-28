@@ -378,25 +378,25 @@ window.deleteUser = async function(userId) {
     };
     
     // Teacher Functions
-    window.getTeacherClasses = async function() {
-        try {
-            const result = await apiCall('/teacher/classes');
-            return result.classes || [];
-        } catch (error) {
-            console.error('Failed to get teacher classes:', error);
-            return [];
-        }
-    };
+   window.getTeacherClasses = async function() {
+  try {
+    const result = await apiCall('/teacher/classes'); // ✅ CORRECT URL
+    return result.classes || [];
+  } catch (error) {
+    console.error('Failed to get teacher classes:', error);
+    return [];
+  }
+};
     
-    window.getStudentsByClass = async function(classId) {
-        try {
-            const result = await apiCall(`/class/${classId}/students`);
-            return result.students || [];
-        } catch (error) {
-            console.error('Failed to get class students:', error);
-            return [];
-        }
-    };
+window.getStudentsByClass = async function(classId) {
+  try {
+    const result = await apiCall(`/teacher/class/${classId}/students`); // ✅ CORRECT URL
+    return result.students || [];
+  } catch (error) {
+    console.error('Failed to get class students:', error);
+    return [];
+  }
+};
     
     window.markAttendance = async function(classId, subjectId, date, attendanceData) {
         try {
@@ -411,21 +411,21 @@ window.deleteUser = async function(userId) {
         }
     };
     
-    window.getAttendanceReport = async function(classId, subjectId, startDate, endDate) {
-        try {
-            const params = new URLSearchParams();
-            if (classId) params.append('classId', classId);
-            if (subjectId) params.append('subjectId', subjectId);
-            if (startDate) params.append('startDate', startDate);
-            if (endDate) params.append('endDate', endDate);
-            
-            const result = await apiCall(`/attendance/report?${params.toString()}`);
-            return result.report || [];
-        } catch (error) {
-            console.error('Failed to get attendance report:', error);
-            return [];
-        }
-    };
+  window.getAttendanceReport = async function(classId, subjectId, startDate, endDate) {
+  try {
+    const params = new URLSearchParams();
+    if (classId) params.append('classId', classId);
+    if (subjectId) params.append('subjectId', subjectId);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    
+    const result = await apiCall(`/teacher/attendance/report?${params.toString()}`); // ✅ CORRECT URL
+    return result.report || [];
+  } catch (error) {
+    console.error('Failed to get attendance report:', error);
+    return [];
+  }
+};
     
     // Student Functions
     window.getStudentAttendance = async function() {

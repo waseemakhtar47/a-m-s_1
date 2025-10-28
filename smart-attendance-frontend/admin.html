@@ -4,6 +4,11 @@
     <meta charset="utf-8" />
     <title>Admin Dashboard - Smart Attendance</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <link rel="icon" type="image/png" href="https://img.icons8.com/ios/50/ffffff/attendance-mark.png">
+
+
+
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
@@ -234,13 +239,6 @@
                   <i class="fas fa-user-graduate text-blue-600 text-xl"></i>
                 </div>
               </div>
-              <div class="mt-4 flex items-center text-sm">
-                <span class="text-green-600 font-medium flex items-center">
-                  <i class="fas fa-arrow-up mr-1"></i>
-                  <span id="studentChange">0</span>
-                </span>
-                <span class="text-gray-500 ml-2">from last month</span>
-              </div>
             </div>
 
             <div
@@ -266,13 +264,6 @@
                   ></i>
                 </div>
               </div>
-              <div class="mt-4 flex items-center text-sm">
-                <span class="text-green-600 font-medium flex items-center">
-                  <i class="fas fa-arrow-up mr-1"></i>
-                  <span id="teacherChange">0</span>
-                </span>
-                <span class="text-gray-500 ml-2">from last month</span>
-              </div>
             </div>
 
             <div
@@ -293,13 +284,6 @@
                 >
                   <i class="fas fa-school text-purple-600 text-xl"></i>
                 </div>
-              </div>
-              <div class="mt-4 flex items-center text-sm">
-                <span class="text-green-600 font-medium flex items-center">
-                  <i class="fas fa-arrow-up mr-1"></i>
-                  <span id="classChange">0</span>
-                </span>
-                <span class="text-gray-500 ml-2">from last month</span>
               </div>
             </div>
 
@@ -840,7 +824,58 @@
               </div>
             </div>
           </div>
-        </div>
+
+
+
+          <!-- Assignment Tracking -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-8">
+  <h4 class="text-lg font-semibold text-gray-800 mb-4">Assignment Tracking</h4>
+  
+  <!-- Teacher Assignments -->
+  <div class="mb-6">
+    <h5 class="text-md font-semibold text-gray-700 mb-3">👨‍🏫 Teacher Assignments</h5>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-gray-200">
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Teacher</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Class</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Subject</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="teacherAssignmentsTable">
+          <!-- Teacher assignments will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Student Assignments -->
+  <div>
+    <h5 class="text-md font-semibold text-gray-700 mb-3">🎓 Student Assignments</h5>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-gray-200">
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Student</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Student ID</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Class</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="studentAssignmentsTable">
+          <!-- Student assignments will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+        
+
+  
 
         <!-- Reports Tab -->
         <div id="reports" class="tab-content hidden">
@@ -1077,33 +1112,35 @@
           loadSubjects();
         } else if (tabName === "assignments") {
           loadAssignmentData();
+           loadAssignmentTracking();
         }
       }
 
-      async function loadDashboardData() {
-        try {
-          // Load stats
-          const students = await getAllStudents();
-          const teachers = await getAllTeachers();
-          const classes = await getAllClasses();
-          const pendingUsers = await getPendingUsers();
+   async function loadDashboardData() {
+  try {
+    // Load stats
+    const students = await getAllStudents();
+    const teachers = await getAllTeachers();
+    const classes = await getAllClasses();
+    const pendingUsers = await getPendingUsers();
 
-          document.getElementById("totalStudents").textContent =
-            students.length;
-          document.getElementById("totalTeachers").textContent =
-            teachers.length;
-          document.getElementById("totalClasses").textContent = classes.length;
-          document.getElementById("pendingApprovals").textContent =
-            pendingUsers.length;
+    // Update counts only - no dummy data
+    document.getElementById("totalStudents").textContent = students.length;
+    document.getElementById("totalTeachers").textContent = teachers.length;
+    document.getElementById("totalClasses").textContent = classes.length;
+    document.getElementById("pendingApprovals").textContent = pendingUsers.length;
 
-          // Calculate changes (mock data for demo)
-          document.getElementById("studentChange").textContent = "+12";
-          document.getElementById("teacherChange").textContent = "+3";
-          document.getElementById("classChange").textContent = "+2";
-        } catch (error) {
-          console.error("Failed to load dashboard data:", error);
-        }
-      }
+
+    // Also remove the "from last month" text
+    const changeElements = document.querySelectorAll('.mt-4.flex.items-center.text-sm');
+    changeElements.forEach(el => {
+      el.style.display = 'none'; // Hide the entire change section
+    });
+
+  } catch (error) {
+    console.error("Failed to load dashboard data:", error);
+  }
+}
 
       async function loadPendingUsers() {
         try {
@@ -1479,46 +1516,87 @@
         }
       }
 
-      async function handleAssignStudent() {
-        const studentId = document.getElementById("studentSelect").value;
-        const classId = document.getElementById("classSelectStudent").value;
+     async function handleAssignStudent() {
+  const studentId = document.getElementById("studentSelect").value;
+  const classId = document.getElementById("classSelectStudent").value;
 
-        if (!studentId || !classId) {
-          alert("Please select both student and class");
-          return;
-        }
+  if (!studentId || !classId) {
+    alert("Please select both student and class");
+    return;
+  }
 
-        const success = await window.assignStudentToClass(studentId, classId);
-        if (success) {
-          alert("Student assigned to class successfully!");
-          loadAssignmentData();
-        } else {
-          alert("Failed to assign student. Please try again.");
-        }
-      }
+  try {
+    const response = await fetch('http://localhost:3000/api/admin/assign-student', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ studentId, classId })
+    });
 
-      async function handleAssignTeacher() {
-        const teacherId = document.getElementById("teacherSelect").value;
-        const classId = document.getElementById("classSelectTeacher").value;
-        const subjectId = document.getElementById("subjectSelect").value;
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('✅ Student assigned successfully!');
+      
+      // 🔄 CRITICAL: Refresh the assignment tracking IMMEDIATELY
+      await loadAssignmentTracking();
+      
+      // 🔄 Also refresh the students dropdown
+      await loadAssignmentData();
+      
+      // Clear the form
+      document.getElementById('studentSelect').value = '';
+      document.getElementById('classSelectStudent').value = '';
+      
+    } else {
+      alert('❌ Failed to assign student: ' + result.error);
+    }
+  } catch (error) {
+    console.error('Assign student error:', error);
+    alert('🚨 Failed to assign student. Please try again.');
+  }
+}
 
-        if (!teacherId || !classId || !subjectId) {
-          alert("Please select teacher, class, and subject");
-          return;
-        }
+async function handleAssignTeacher() {
+  const teacherId = document.getElementById('teacherSelect').value;
+  const classId = document.getElementById('classSelectTeacher').value;
+  const subjectId = document.getElementById('subjectSelect').value;
 
-        const success = await window.assignTeacherToClass(
-          teacherId,
-          classId,
-          subjectId
-        );
-        if (success) {
-          alert("Teacher assigned to class and subject successfully!");
-          loadAssignmentData();
-        } else {
-          alert("Failed to assign teacher. Please try again.");
-        }
-      }
+  if (!teacherId || !classId || !subjectId) {
+    alert('Please select teacher, class, and subject');
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/api/admin/assign-teacher', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ teacherId, classId, subjectId })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Teacher assigned successfully!');
+      
+      // ✅ REFRESH ASSIGNMENT TRACKING
+      await loadAssignmentTracking();
+      
+      // Clear form
+      document.getElementById('teacherSelect').value = '';
+      document.getElementById('classSelectTeacher').value = '';
+      document.getElementById('subjectSelect').value = '';
+    } else {
+      alert('Failed to assign teacher: ' + result.error);
+    }
+  } catch (error) {
+    console.error('Assign teacher error:', error);
+    alert('Failed to assign teacher. Please try again.');
+  }
+}
 
       async function generateReport() {
         const reportType = document.getElementById("reportType").value;
@@ -1850,6 +1928,344 @@
           alert("🚨 Network error: Failed to create subject");
         }
       }
+
+      // Load assignment tracking data
+// Load assignment tracking data - FIXED VERSION
+async function loadAssignmentTracking() {
+  try {
+    console.log('🔄 Loading assignment tracking...');
+    
+    // DONO functions call karo - sequentially
+    await loadTeacherAssignments();
+    console.log('✅ Teacher assignments loaded');
+    
+    await loadStudentAssignments(); 
+    console.log('✅ Student assignments loaded');
+    
+  } catch (error) {
+    console.error('❌ Failed to load assignment tracking:', error);
+  }
+}
+// Load teacher assignments - FIXED VERSION
+async function loadTeacherAssignments() {
+  try {
+    const classes = await getAllClasses();
+    const teachers = await getAllTeachers();
+    const subjects = await getAllSubjects();
+    
+    console.log('🔍 Teacher Assignments Debug:');
+    console.log('Classes:', classes);
+    console.log('Teachers:', teachers);
+    console.log('Subjects:', subjects);
+    
+    const tableBody = document.getElementById('teacherAssignmentsTable');
+    
+    if (!classes || classes.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-8 text-center text-gray-500">
+            <i class="fas fa-chalkboard-teacher text-2xl mb-2 opacity-50"></i>
+            <p>No classes found</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let teacherAssignmentsHTML = '';
+    let assignmentCount = 0;
+    
+    classes.forEach(cls => {
+      console.log(`Checking class: ${cls.name}`, cls.subjects);
+      
+      if (cls.subjects && cls.subjects.length > 0) {
+        cls.subjects.forEach(subjectObj => {
+          console.log('Subject Object:', subjectObj);
+          
+          if (subjectObj.teacher && subjectObj.subject) {
+            const teacher = teachers.find(t => t._id === subjectObj.teacher._id.toString());
+            const subject = subjectObj.subject;
+            
+            console.log('Found teacher:', teacher);
+            console.log('Found subject:', subject);
+            
+            if (teacher && subject) {
+              assignmentCount++;
+              teacherAssignmentsHTML += `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                  <td class="py-3 px-4 text-sm">
+                    ${teacher.firstName} ${teacher.lastName}
+                  </td>
+                  <td class="py-3 px-4 text-sm">
+                    ${cls.name} - ${cls.section}
+                  </td>
+                  <td class="py-3 px-4 text-sm">
+                    ${subject.name} (${subject.code})
+                  </td>
+                  <td class="py-3 px-4 text-sm">
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                      Assigned
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-sm">
+                    <button onclick="removeTeacherAssignment('${cls._id}', '${subject._id}')" 
+                            class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }
+          }
+        });
+      }
+    });
+
+    console.log(`Total assignments found: ${assignmentCount}`);
+
+    if (assignmentCount === 0) {
+      teacherAssignmentsHTML = `
+        <tr>
+          <td colspan="5" class="py-4 text-center text-gray-500">
+            No teacher assignments found
+          </td>
+        </tr>
+      `;
+    }
+    
+    tableBody.innerHTML = teacherAssignmentsHTML;
+    console.log('Final HTML:', teacherAssignmentsHTML);
+    
+  } catch (error) {
+    console.error('Failed to load teacher assignments:', error);
+  }
+}
+
+  
+
+      
+   
+
+
+// Load student assignments - COMPLETELY FIXED VERSION
+async function loadStudentAssignments() {
+  try {
+    console.log('🎓 loadStudentAssignments STARTED');
+    
+    const students = await getAllStudents();
+    const classes = await getAllClasses();
+    
+    console.log('Students with class data:', students);
+    console.log('Available classes:', classes);
+    
+    const tableBody = document.getElementById('studentAssignmentsTable');
+    console.log('Table body:', tableBody);
+    
+    if (!students || students.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-8 text-center text-gray-500">
+            No students found
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let studentAssignmentsHTML = '';
+    
+    students.forEach(student => {
+      console.log('Processing student:', student.firstName, 'Class ID:', student.class);
+      
+      // Find student's class using the class reference
+      let studentClass = null;
+      if (student.class) {
+        studentClass = classes.find(cls => cls._id.toString() === student.class.toString());
+        console.log('Student class found:', studentClass);
+      }
+      
+      const isAssigned = !!studentClass;
+      
+      studentAssignmentsHTML += `
+        <tr class="border-b border-gray-100 hover:bg-gray-50">
+          <td class="py-3 px-4 text-sm">
+            ${student.firstName} ${student.lastName}
+          </td>
+          <td class="py-3 px-4 text-sm">
+            ${student.studentId || 'N/A'}
+          </td>
+          <td class="py-3 px-4 text-sm">
+            ${studentClass ? `${studentClass.name} - ${studentClass.section}` : 'Not Assigned'}
+          </td>
+          <td class="py-3 px-4 text-sm">
+            <span class="px-2 py-1 ${isAssigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} rounded-full text-xs font-medium">
+              ${isAssigned ? 'Assigned' : 'Not Assigned'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-sm">
+            ${isAssigned ? `
+              <button onclick="removeStudentAssignment('${student._id}')" 
+                      class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
+                Remove
+              </button>
+            ` : '-'}
+          </td>
+        </tr>
+      `;
+    });
+    
+    tableBody.innerHTML = studentAssignmentsHTML;
+    console.log('✅ Student assignments loaded successfully');
+    
+  } catch (error) {
+    console.error('❌ loadStudentAssignments ERROR:', error);
+  }
+}
+
+    
+      
+     
+// Remove teacher assignment
+async function removeTeacherAssignment(classId, subjectId) {
+  if (!confirm('Are you sure you want to remove this teacher assignment?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/api/admin/remove-teacher-assignment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ classId, subjectId })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Teacher assignment removed successfully!');
+      await loadAssignmentTracking();
+    } else {
+      alert('Failed to remove teacher assignment: ' + result.error);
+    }
+  } catch (error) {
+    console.error('Remove teacher assignment error:', error);
+    alert('Failed to remove teacher assignment. Please try again.');
+  }
+}
+
+// Remove student assignment
+async function removeStudentAssignment(studentId) {
+  if (!confirm('Are you sure you want to remove this student from class?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/api/admin/remove-student-assignment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ studentId })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Student assignment removed successfully!');
+      await loadAssignmentTracking();
+    } else {
+      alert('Failed to remove student assignment: ' + result.error);
+    }
+  } catch (error) {
+    console.error('Remove student assignment error:', error);
+    alert('Failed to remove student assignment. Please try again.');
+  }
+}
+
+// Load student assignments - SHOWS ONLY ASSIGNED STUDENTS
+async function loadStudentAssignments() {
+  try {
+    console.log('🎓 Loading student assignments...');
+    
+    const students = await getAllStudents();
+    console.log('📊 All students:', students);
+    
+    const tableBody = document.getElementById('studentAssignmentsTable');
+    
+    // FILTER: Only show students who have class assignments
+    const assignedStudents = students.filter(student => {
+      const hasClass = student.class && student.class._id;
+      console.log(`Filter: ${student.firstName} - hasClass: ${hasClass}`);
+      return hasClass;
+    });
+    
+    console.log('✅ Assigned students:', assignedStudents);
+    
+    if (assignedStudents.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-8 text-center text-gray-500">
+            <i class="fas fa-user-graduate text-2xl mb-2 opacity-50"></i>
+            <p>No student assignments found</p>
+            <p class="text-sm mt-1">Assign students to classes to see them here</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let studentAssignmentsHTML = '';
+    
+    assignedStudents.forEach(student => {
+      const studentClass = student.class;
+      
+      studentAssignmentsHTML += `
+        <tr class="border-b border-gray-100 hover:bg-gray-50">
+          <td class="py-3 px-4 text-sm font-medium">
+            ${student.firstName} ${student.lastName}
+          </td>
+          <td class="py-3 px-4 text-sm">
+            ${student.studentId || 'N/A'}
+          </td>
+          <td class="py-3 px-4 text-sm">
+            ${studentClass.name} - ${studentClass.section}
+          </td>
+          <td class="py-3 px-4 text-sm">
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+              Assigned
+            </span>
+          </td>
+          <td class="py-3 px-4 text-sm">
+            <button onclick="removeStudentAssignment('${student._id}')" 
+                    class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
+              Remove
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    
+    tableBody.innerHTML = studentAssignmentsHTML;
+    console.log('✅ Student assignments table updated - showing only assigned students');
+    
+  } catch (error) {
+    console.error('❌ Failed to load student assignments:', error);
+  }
+}
+
+// TEST FUNCTION - Add this and run it in browser console
+async function testStudentClass() {
+  const students = await getAllStudents();
+  console.log('🧪 TEST - Student Class Data:', students);
+  
+  students.forEach(s => {
+    console.log(`Student: ${s.firstName} ${s.lastName}`, 
+                `Class:`, s.class, 
+                `Has Class: ${!!(s.class && s.class._id)}`);
+  });
+}
+
     </script>
   </body>
 </html>
