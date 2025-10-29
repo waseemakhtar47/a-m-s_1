@@ -564,147 +564,6 @@
       }
     }
     
-    async function loadTeacherClasses() {
-      try {
-        const classes = await getTeacherClasses();
-        const container = document.getElementById('teacherClasses');
-        
-        if (classes.length === 0) {
-          container.innerHTML = `
-            <div class="col-span-full text-center py-12 text-gray-500">
-              <i class="fas fa-school text-4xl mb-4 opacity-50"></i>
-              <p>No classes assigned</p>
-              <p class="text-sm mt-1">Contact admin to get assigned to classes</p>
-            </div>
-          `;
-          return;
-        }
-        
-        container.innerHTML = await Promise.all(classes.map(async (cls) => {
-          const students = await getStudentsByClass(cls._id);
-          const attendance = await getAttendanceReport(cls._id, null, todayISO(), todayISO());
-          
-          const presentToday = attendance.filter(a => a.status === 'present').length;
-          const attendancePercent = percent(presentToday, students.length);
-          
-          return `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div class="flex items-start justify-between mb-4">
-                <div>
-                  <h4 class="text-lg font-semibold text-gray-800">${cls.name}</h4>
-                  <p class="text-sm text-gray-600">Section ${cls.section}</p>
-                </div>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                  ${students.length} students
-                </span>
-              </div>
-              
-              <div class="space-y-3 mb-6">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">Today's Attendance</span>
-                  <span class="font-medium ${attendancePercent >= 75 ? 'text-green-600' : 'text-red-600'}">
-                    ${attendancePercent}%
-                  </span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div class="bg-green-600 h-2 rounded-full" style="width: ${attendancePercent}%"></div>
-                </div>
-                <div class="flex justify-between text-xs text-gray-500">
-                  <span>${presentToday} present</span>
-                  <span>${students.length - presentToday} absent</span>
-                </div>
-              </div>
-              
-              <div class="flex space-x-2">
-                <button onclick="showClassDetails('${cls._id}')" class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm">
-                  View Details
-                </button>
-                <button onclick="takeAttendanceForClass('${cls._id}')" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm">
-                  Take Attendance
-                </button>
-              </div>
-            </div>
-          `;
-        })).then(html => html.join(''));
-        
-      } catch (error) {
-        console.error('Failed to load teacher classes:', error);
-      }
-    }
-    
-    async function loadStudentsForAttendance() {
-      const classId = document.getElementById('attendanceClass').value;
-      const subjectId = document.getElementById('attendanceSubject').value;
-      const date = document.getElementById('attendanceDate').value;
-      
-      // ✅ ADD VALIDATION
-      if (!classId || classId === 'undefined') {
-        alert('Please select a valid class');
-        return;
-      }
-      
-      if (!subjectId || !date) {
-        alert('Please select subject and date');
-        return;
-      }
-      
-      try {
-        const students = await getStudentsByClass(classId);
-        const form = document.getElementById('attendanceForm');
-        
-        if (students.length === 0) {
-          form.innerHTML = `
-            <div class="text-center py-12 text-gray-500">
-              <i class="fas fa-users text-4xl mb-4 opacity-50"></i>
-              <p>No students found in this class</p>
-              <p class="text-sm mt-1">Contact admin to assign students to this class</p>
-            </div>
-          `;
-          return;
-        }
-        
-        form.innerHTML = students.map(student => `
-          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div class="flex items-center space-x-4">
-              <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                ${student.name ? student.name.charAt(0) : 'S'}
-              </div>
-              <div>
-                <p class="font-medium text-gray-800">${student.name || 'Unknown Student'}</p>
-                <p class="text-sm text-gray-600">${student.studentId || 'No ID'}</p>
-              </div>
-            </div>
-            <div class="flex space-x-2">
-              <label class="flex items-center space-x-2 cursor-pointer">
-                <input type="radio" name="attendance_${student.id}" value="present" class="hidden peer">
-                <span class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:bg-green-600 peer-checked:border-green-600 flex items-center justify-center">
-                  <i class="fas fa-check text-white text-xs hidden peer-checked:block"></i>
-                </span>
-                <span class="text-sm font-medium">Present</span>
-              </label>
-              <label class="flex items-center space-x-2 cursor-pointer">
-                <input type="radio" name="attendance_${student.id}" value="absent" class="hidden peer" checked>
-                <span class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:bg-red-600 peer-checked:border-red-600 flex items-center justify-center">
-                  <i class="fas fa-times text-white text-xs hidden peer-checked:block"></i>
-                </span>
-                <span class="text-sm font-medium">Absent</span>
-              </label>
-            </div>
-          </div>
-        `).join('');
-        
-      } catch (error) {
-        console.error('Failed to load students:', error);
-        const form = document.getElementById('attendanceForm');
-        form.innerHTML = `
-          <div class="text-center py-12 text-red-500">
-            <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
-            <p>Failed to load students</p>
-            <p class="text-sm mt-1">Please try again</p>
-          </div>
-        `;
-      }
-    }
     
     function markAllPresent() {
       document.querySelectorAll('input[type="radio"][value="present"]').forEach(radio => {
@@ -712,6 +571,115 @@
       });
     }
 
+async function loadTeacherClasses() {
+  try {
+    const classes = await getTeacherClasses();
+    const container = document.getElementById('teacherClasses');
+
+    console.log('🔍 ALL CLASSES FROM BACKEND:', classes);
+    
+    if (!classes || classes.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-12 text-gray-500">
+          <i class="fas fa-school text-4xl mb-4 opacity-50"></i>
+          <p>No classes assigned</p>
+        </div>
+      `;
+      return;
+    }
+
+    // ✅ FILTER CLASSES - Sirf wahi classes dikhao jisme teacher ke subjects hain
+    const teachingClasses = classes.filter(cls => {
+      // Check if this class has subjects assigned to current teacher
+      const hasTeacherSubjects = cls.subjects && cls.subjects.some(subject => 
+        subject && subject.teacher // Subject mein teacher assigned hai
+      );
+      
+      console.log(`🏫 ${cls.name} - ${cls.section}: Has Teacher Subjects = ${hasTeacherSubjects}`);
+      return hasTeacherSubjects;
+    });
+
+    console.log('🎯 TEACHING CLASSES (AFTER FILTER):', teachingClasses);
+
+    if (teachingClasses.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-12 text-gray-500">
+          <i class="fas fa-chalkboard-teacher text-4xl mb-4 opacity-50"></i>
+          <p>No teaching assignments found</p>
+          <p class="text-sm mt-1">You are not assigned to teach any subjects yet</p>
+          <p class="text-xs text-gray-400 mt-2">Contact admin to get assigned to classes</p>
+        </div>
+      `;
+      return;
+    }
+
+    // ✅ Display only teaching classes
+    container.innerHTML = teachingClasses.map(cls => {
+      // Get subjects that are assigned to this teacher
+      const teacherSubjects = cls.subjects.filter(subject => 
+        subject && subject.teacher
+      );
+
+      // Subjects display
+      let subjectsText = 'No subjects assigned';
+      if (teacherSubjects.length > 0) {
+        const subjectNames = teacherSubjects.map(subjectObj => {
+          if (subjectObj && subjectObj.subject) {
+            // Agar subject object hai toh name dekho
+            if (typeof subjectObj.subject === 'object' && subjectObj.subject.name) {
+              return subjectObj.subject.name;
+            }
+            // Agar subject ID hai toh generic name
+            else if (typeof subjectObj.subject === 'string') {
+              return 'Subject';
+            }
+          }
+          return 'Subject';
+        });
+        subjectsText = subjectNames.join(', ');
+      }
+
+      return `
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition duration-200">
+          <!-- Class Header -->
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800">${cls.name}</h3>
+              <p class="text-gray-500">Section ${cls.section}</p>
+            </div>
+            <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium">
+              ${teacherSubjects.length} Subject(s)
+            </span>
+          </div>
+          
+          <!-- Subjects -->
+          <div class="mb-6">
+            <div class="flex items-center text-sm text-gray-700 mb-2">
+              <i class="fas fa-book text-purple-500 mr-2"></i>
+              <span><strong>Teaching:</strong> ${subjectsText}</span>
+            </div>
+          </div>
+          
+          <!-- Take Attendance Button -->
+          <button onclick="takeAttendanceForClass('${cls._id}')" 
+                  class="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+            <i class="fas fa-clipboard-check mr-2"></i>
+            Take Attendance
+          </button>
+        </div>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    console.error('Failed to load teacher classes:', error);
+    container.innerHTML = `
+      <div class="col-span-full text-center py-12 text-gray-500">
+        <i class="fas fa-exclamation-triangle text-4xl mb-4 opacity-50"></i>
+        <p>Error loading classes</p>
+      </div>
+    `;
+  }
+}
     function markAllAbsent() {
       document.querySelectorAll('input[type="radio"][value="absent"]').forEach(radio => {
         radio.checked = true;
@@ -853,16 +821,277 @@
       }
     }
     
-    function showClassDetails(classId) {
-      alert(`Class details for ${classId} would be shown here in a full implementation.`);
+
+
+    
+   function takeAttendanceForClass(classId) {
+  // Mark Attendance tab pe redirect karo
+  showTab('attendance');
+  
+  // Class select karo automatically
+  document.getElementById('attendanceClass').value = classId;
+  
+  // Subjects load karo
+  document.getElementById('attendanceClass').dispatchEvent(new Event('change'));
+  
+  // Success message (optional)
+  console.log(`Taking attendance for class: ${classId}`);
+}
+
+function todayISO() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function percent(part, total) {
+    return total > 0 ? Math.round((part / total) * 100) : 0;
+}
+
+// ✅ YEH FUNCTION ADD KARO teacher.html MEIN
+async function loadStudentsForAttendance() {
+  const classId = document.getElementById('attendanceClass').value;
+  const subjectId = document.getElementById('attendanceSubject').value;
+  const date = document.getElementById('attendanceDate').value;
+  
+  // ✅ ADD VALIDATION
+  if (!classId || classId === 'undefined') {
+    alert('Please select a valid class');
+    return;
+  }
+  
+  if (!subjectId || !date) {
+    alert('Please select subject and date');
+    return;
+  }
+  
+  try {
+    const students = await getStudentsByClass(classId);
+    const form = document.getElementById('attendanceForm');
+    
+    if (students.length === 0) {
+      form.innerHTML = `
+        <div class="text-center py-12 text-gray-500">
+          <i class="fas fa-users text-4xl mb-4 opacity-50"></i>
+          <p>No students found in this class</p>
+          <p class="text-sm mt-1">Contact admin to assign students to this class</p>
+        </div>
+      `;
+      return;
     }
     
-    function takeAttendanceForClass(classId) {
-      showTab('attendance');
-      document.getElementById('attendanceClass').value = classId;
-      // Trigger change event to load subjects
-      document.getElementById('attendanceClass').dispatchEvent(new Event('change'));
+    form.innerHTML = students.map(student => `
+      <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+        <div class="flex items-center space-x-4">
+          <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
+            ${student.name ? student.name.charAt(0) : 'S'}
+          </div>
+          <div>
+            <p class="font-medium text-gray-800">${student.name || 'Unknown Student'}</p>
+            <p class="text-sm text-gray-600">${student.studentId || 'No ID'}</p>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="radio" name="attendance_${student._id || student.id}" value="present" class="hidden peer">
+            <span class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:bg-green-600 peer-checked:border-green-600 flex items-center justify-center">
+              <i class="fas fa-check text-white text-xs hidden peer-checked:block"></i>
+            </span>
+            <span class="text-sm font-medium">Present</span>
+          </label>
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="radio" name="attendance_${student._id || student.id}" value="absent" class="hidden peer" checked>
+            <span class="w-6 h-6 border-2 border-gray-300 rounded-full peer-checked:bg-red-600 peer-checked:border-red-600 flex items-center justify-center">
+              <i class="fas fa-times text-white text-xs hidden peer-checked:block"></i>
+            </span>
+            <span class="text-sm font-medium">Absent</span>
+          </label>
+        </div>
+      </div>
+    `).join('');
+    
+  } catch (error) {
+    console.error('Failed to load students:', error);
+    const form = document.getElementById('attendanceForm');
+    form.innerHTML = `
+      <div class="text-center py-12 text-red-500">
+        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+        <p>Failed to load students</p>
+        <p class="text-sm mt-1">Please try again</p>
+      </div>
+    `;
+  }
+}
+
+// ✅ YEH FUNCTION ADD KARO teacher.html MEIN
+async function showClassDetails(classId) {
+  try {
+    
+    // Class data fetch karo
+    const classes = await getTeacherClasses();
+    const cls = classes.find(c => c._id === classId);
+    
+    if (!cls) {
+      alert('Class not found');
+      return;
     }
-  </script>
+    
+    // Students fetch karo
+    const students = await getStudentsByClass(classId);
+    
+    // Attendance data fetch karo (last 7 days)
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 7);
+    const startDateStr = startDate.toISOString().split('T')[0];
+    
+    const attendanceReport = await getAttendanceReport(classId, null, startDateStr, endDate);
+    
+    // Modal create karo
+    const modalHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+            <div class="flex justify-between items-center">
+              <div>
+                <h2 class="text-2xl font-bold">${cls.name} - Section ${cls.section}</h2>
+                <p class="text-blue-100">Class Details & Analytics</p>
+              </div>
+              <button onclick="closeClassDetails()" class="text-white hover:text-blue-200 text-2xl">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Content -->
+          <div class="p-6 overflow-y-auto max-h-[70vh]">
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div class="text-blue-600 text-sm font-medium">Total Students</div>
+                <div class="text-2xl font-bold text-blue-800">${students.length}</div>
+              </div>
+              <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div class="text-green-600 text-sm font-medium">Present Today</div>
+                <div class="text-2xl font-bold text-green-800" id="todayPresentCount">0</div>
+              </div>
+              <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div class="text-purple-600 text-sm font-medium">Weekly Avg.</div>
+                <div class="text-2xl font-bold text-purple-800" id="weeklyAvg">0%</div>
+              </div>
+            </div>
+            
+            <!-- Subjects -->
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">Subjects</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="classSubjectsList">
+                ${cls.subjects && cls.subjects.length > 0 ? 
+                  cls.subjects.map(subject => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div>
+                        <div class="font-medium text-gray-800">${subject.subject?.name || 'Unknown Subject'}</div>
+                        <div class="text-sm text-gray-600">Code: ${subject.subject?.code || 'N/A'}</div>
+                      </div>
+                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        Assigned
+                      </span>
+                    </div>
+                  `).join('') : 
+                  '<div class="col-span-full text-center py-4 text-gray-500">No subjects assigned</div>'
+                }
+              </div>
+            </div>
+            
+            <!-- Students List -->
+            <div class="mb-6">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-semibold text-gray-800">Students (${students.length})</h3>
+                <button onclick="exportClassData('${classId}')" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                  <i class="fas fa-download mr-1"></i>Export
+                </button>
+              </div>
+              <div class="space-y-2 max-h-60 overflow-y-auto">
+                ${students.length > 0 ? students.map(student => `
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                        ${student.firstName ? student.firstName.charAt(0) : 'S'}
+                      </div>
+                      <div>
+                        <div class="font-medium text-gray-800">${student.firstName} ${student.lastName}</div>
+                        <div class="text-sm text-gray-600">ID: ${student.studentId || 'N/A'}</div>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm font-medium text-gray-800">${student.email || 'No email'}</div>
+                      <div class="text-xs text-gray-500">${student.phone || 'No phone'}</div>
+                    </div>
+                  </div>
+                `).join('') : 
+                '<div class="text-center py-4 text-gray-500">No students in this class</div>'
+                }
+              </div>
+            </div>
+            
+            <!-- Recent Attendance -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">Recent Attendance</h3>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                ${attendanceReport.length > 0 ? `
+                  <div class="space-y-2 max-h-40 overflow-y-auto">
+                    ${attendanceReport.slice(0, 10).map(record => `
+                      <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <div class="flex items-center space-x-3">
+                          <span class="w-2 h-2 rounded-full ${record.status === 'present' ? 'bg-green-500' : 'bg-red-500'}"></span>
+                          <div>
+                            <div class="text-sm font-medium">${record.student?.firstName || 'Unknown'} ${record.student?.lastName || ''}</div>
+                            <div class="text-xs text-gray-500">${record.subject?.name || 'Unknown Subject'}</div>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-sm ${record.status === 'present' ? 'text-green-600' : 'text-red-600'} font-medium">
+                            ${record.status === 'present' ? 'Present' : 'Absent'}
+                          </div>
+                          <div class="text-xs text-gray-500">${formatDate(record.date)}</div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : 
+                '<div class="text-center py-4 text-gray-500">No attendance records found</div>'
+                }
+              </div>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+            <button onclick="closeClassDetails()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+              Close
+            </button>
+            <button onclick="takeAttendanceForClass('${classId}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Take Attendance
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Modal add karo
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'classDetailsModal';
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer);
+    
+    // Statistics calculate karo
+    calculateClassStats(attendanceReport, students.length);
+    
+  } catch (error) {
+    console.error('Error showing class details:', error);
+    alert('Failed to load class details. Please try again.');
+  }
+}
+
+
+</script>
 </body>
 </html>

@@ -3,18 +3,39 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Subject = require('../models/Subject');
 
-// Get teacher's classes
+// Get teacher's classes - FIXED VERSION
 exports.getTeacherClasses = async (req, res) => {
   try {
     const teacherId = req.user._id;
+
+    console.log('🔍 Fetching classes for teacher:', teacherId);
 
     const classes = await Class.find({
       $or: [
         { teacher: teacherId },
         { 'subjects.teacher': teacherId }
       ]
-    }).populate('students', 'firstName lastName studentId')
-      .populate('subjects.subject', 'name code');
+    })
+    .populate('students', 'firstName lastName studentId')
+    .populate({
+      path: 'subjects.subject',
+      model: 'Subject',
+      select: 'name code'
+    })
+    .populate('teacher', 'firstName lastName');
+
+    console.log('📋 Teacher Classes Found:', classes.length);
+    
+    // Debug: Check populated data
+    classes.forEach((cls, index) => {
+      console.log(`Class ${index}: ${cls.name}`);
+      console.log(`  Subjects:`, cls.subjects);
+      if (cls.subjects && cls.subjects.length > 0) {
+        cls.subjects.forEach((sub, subIndex) => {
+          console.log(`    Subject ${subIndex}:`, sub.subject);
+        });
+      }
+    });
 
     res.json({ classes });
   } catch (error) {
