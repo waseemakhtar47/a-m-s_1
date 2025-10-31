@@ -1,5 +1,3 @@
-ATTENDANCE MANAGEMENT SYSTEM
-�
 +-- smart-attendance-backend
 �   +-- config
 �   �   +-- database.js
