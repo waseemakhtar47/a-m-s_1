@@ -3,13 +3,15 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Subject = require('../models/Subject');
 
-// Get teacher's classes - FIXED VERSION
+
+// Get teacher's classes - ULTRA FIXED VERSION
 exports.getTeacherClasses = async (req, res) => {
   try {
     const teacherId = req.user._id;
 
     console.log('🔍 Fetching classes for teacher:', teacherId);
 
+    // ✅ ULTRA FIX: Better population with error handling
     const classes = await Class.find({
       $or: [
         { teacher: teacherId },
@@ -22,25 +24,49 @@ exports.getTeacherClasses = async (req, res) => {
       model: 'Subject',
       select: 'name code'
     })
-    .populate('teacher', 'firstName lastName');
+    .populate({
+      path: 'subjects.teacher', 
+      model: 'User',
+      select: 'firstName lastName teacherId'
+    })
+    .populate('teacher', 'firstName lastName')
+    .lean();
 
-    console.log('📋 Teacher Classes Found:', classes.length);
+    console.log('📋 Raw Classes Found:', classes.length);
     
-    // Debug: Check populated data
-    classes.forEach((cls, index) => {
-      console.log(`Class ${index}: ${cls.name}`);
-      console.log(`  Subjects:`, cls.subjects);
-      if (cls.subjects && cls.subjects.length > 0) {
-        cls.subjects.forEach((sub, subIndex) => {
-          console.log(`    Subject ${subIndex}:`, sub.subject);
-        });
-      }
-    });
+    // ✅ ULTRA FIX: Better filtering and validation
+    const filteredClasses = classes.map(cls => {
+      // Filter subjects where THIS teacher is assigned AND subject exists
+      const teacherSubjects = cls.subjects.filter(sub => {
+        if (!sub.teacher) return false;
+        if (!sub.subject) return false; // ✅ Skip if subject is null
+        return sub.teacher._id.toString() === teacherId.toString();
+      });
 
-    res.json({ classes });
+      console.log(`Class ${cls.name}:`, {
+        totalSubjects: cls.subjects?.length || 0,
+        teacherSubjects: teacherSubjects.length,
+        subjectNames: teacherSubjects.map(s => s.subject?.name)
+      });
+
+      return {
+        ...cls,
+        subjects: teacherSubjects
+      };
+    }).filter(cls => cls.subjects.length > 0);
+
+    console.log('✅ Final Classes:', filteredClasses.length);
+    
+    res.json({ 
+      success: true,
+      classes: filteredClasses 
+    });
   } catch (error) {
-    console.error('Get teacher classes error:', error);
-    res.status(500).json({ error: 'Failed to fetch classes' });
+    console.error('❌ Get teacher classes error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch classes' 
+    });
   }
 };
 

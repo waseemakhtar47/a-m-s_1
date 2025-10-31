@@ -16,6 +16,7 @@ const {
   getAllTeachers
 } = require('../controllers/adminController');
 const Subject = require('../models/Subject'); // ✅ Subject import karo
+const Class = require('../models/Class'); 
 
 const router = express.Router();
 
@@ -95,5 +96,9 @@ router.get('/subject/:id/details', async (req, res) => {
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
+
+
+
+
 
 module.exports = router;

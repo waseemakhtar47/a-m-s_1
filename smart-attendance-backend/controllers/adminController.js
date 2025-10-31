@@ -234,16 +234,26 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// Get all classes
+// Get all classes - Ensure proper population
+// Get all classes - FIXED VERSION
 exports.getAllClasses = async (req, res) => {
   try {
     const classes = await Class.find()
       .populate('students', 'firstName lastName studentId')
       .populate('subjects.teacher', 'firstName lastName')
       .populate('subjects.subject', 'name code')
-      .sort({ createdAt: -1 });
+      .populate('teacher', 'firstName lastName')
+      .lean(); // ✅ Added lean for better performance
 
-    res.json({ classes });
+    // ✅ FIX: Filter out null subjects before sending response
+    const cleanedClasses = classes.map(cls => ({
+      ...cls,
+      subjects: cls.subjects ? cls.subjects.filter(sub => 
+        sub.subject !== null && sub.subject !== undefined
+      ) : []
+    }));
+
+    res.json({ classes: cleanedClasses });
   } catch (error) {
     console.error('Get classes error:', error);
     res.status(500).json({ error: 'Failed to fetch classes' });

@@ -403,16 +403,25 @@ window.deleteUser = async function(userId) {
 };
     
     // Teacher Functions
-   window.getTeacherClasses = async function() {
+
+// Teacher Functions - FIXED VERSION
+window.getTeacherClasses = async function() {
   try {
-    const result = await apiCall('/teacher/classes'); // ✅ CORRECT URL
-    return result.classes || [];
+    const result = await apiCall('/teacher/classes');
+    
+    if (result.success) {
+      return result.classes || [];
+    } else {
+      console.error('API Error:', result.error);
+      return [];
+    }
   } catch (error) {
     console.error('Failed to get teacher classes:', error);
     return [];
   }
 };
-    
+
+
 window.getStudentsByClass = async function(classId) {
   try {
     const result = await apiCall(`/teacher/class/${classId}/students`); // ✅ CORRECT URL

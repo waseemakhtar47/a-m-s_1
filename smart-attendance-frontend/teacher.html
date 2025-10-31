@@ -571,37 +571,16 @@
       });
     }
 
+
+// Load teacher classes - ULTRA FIXED VERSION
 async function loadTeacherClasses() {
   try {
     const classes = await getTeacherClasses();
     const container = document.getElementById('teacherClasses');
 
-    console.log('🔍 ALL CLASSES FROM BACKEND:', classes);
+    console.log('🔍 FINAL Classes Data:', classes);
     
     if (!classes || classes.length === 0) {
-      container.innerHTML = `
-        <div class="col-span-full text-center py-12 text-gray-500">
-          <i class="fas fa-school text-4xl mb-4 opacity-50"></i>
-          <p>No classes assigned</p>
-        </div>
-      `;
-      return;
-    }
-
-    // ✅ FILTER CLASSES - Sirf wahi classes dikhao jisme teacher ke subjects hain
-    const teachingClasses = classes.filter(cls => {
-      // Check if this class has subjects assigned to current teacher
-      const hasTeacherSubjects = cls.subjects && cls.subjects.some(subject => 
-        subject && subject.teacher // Subject mein teacher assigned hai
-      );
-      
-      console.log(`🏫 ${cls.name} - ${cls.section}: Has Teacher Subjects = ${hasTeacherSubjects}`);
-      return hasTeacherSubjects;
-    });
-
-    console.log('🎯 TEACHING CLASSES (AFTER FILTER):', teachingClasses);
-
-    if (teachingClasses.length === 0) {
       container.innerHTML = `
         <div class="col-span-full text-center py-12 text-gray-500">
           <i class="fas fa-chalkboard-teacher text-4xl mb-4 opacity-50"></i>
@@ -613,31 +592,37 @@ async function loadTeacherClasses() {
       return;
     }
 
-    // ✅ Display only teaching classes
-    container.innerHTML = teachingClasses.map(cls => {
-      // Get subjects that are assigned to this teacher
-      const teacherSubjects = cls.subjects.filter(subject => 
-        subject && subject.teacher
-      );
+    // ✅ ULTRA FIX: Better data handling
+    container.innerHTML = classes.map(cls => {
+      const teacherSubjects = cls.subjects || [];
+      
+      console.log(`Rendering ${cls.name}:`, teacherSubjects);
 
-      // Subjects display
+      // ✅ FIXED: Better subject name handling
       let subjectsText = 'No subjects assigned';
+      let subjectNames = [];
+      let subjectCodes = [];
+      
       if (teacherSubjects.length > 0) {
-        const subjectNames = teacherSubjects.map(subjectObj => {
-          if (subjectObj && subjectObj.subject) {
-            // Agar subject object hai toh name dekho
-            if (typeof subjectObj.subject === 'object' && subjectObj.subject.name) {
-              return subjectObj.subject.name;
-            }
-            // Agar subject ID hai toh generic name
-            else if (typeof subjectObj.subject === 'string') {
-              return 'Subject';
-            }
+        subjectNames = teacherSubjects.map(subjectObj => {
+          if (subjectObj && subjectObj.subject && subjectObj.subject.name) {
+            return subjectObj.subject.name;
           }
-          return 'Subject';
+          return 'Subject Not Found';
         });
+        
+        subjectCodes = teacherSubjects.map(subjectObj => {
+          if (subjectObj && subjectObj.subject && subjectObj.subject.code) {
+            return subjectObj.subject.code;
+          }
+          return 'N/A';
+        });
+        
         subjectsText = subjectNames.join(', ');
       }
+
+      const studentCount = cls.students ? cls.students.length : 0;
+      const subjectCount = teacherSubjects.length;
 
       return `
         <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition duration-200">
@@ -648,7 +633,7 @@ async function loadTeacherClasses() {
               <p class="text-gray-500">Section ${cls.section}</p>
             </div>
             <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium">
-              ${teacherSubjects.length} Subject(s)
+              ${subjectCount} Subject(s)
             </span>
           </div>
           
@@ -658,11 +643,24 @@ async function loadTeacherClasses() {
               <i class="fas fa-book text-purple-500 mr-2"></i>
               <span><strong>Teaching:</strong> ${subjectsText}</span>
             </div>
+            <div class="text-xs text-gray-500">
+              <strong>Students:</strong> ${studentCount}
+            </div>
+            ${subjectCodes.length > 0 ? `
+              <div class="text-xs text-gray-500 mt-1">
+                <strong>Subject Codes:</strong> ${subjectCodes.join(', ')}
+              </div>
+            ` : ''}
+          </div>
+          
+          <!-- Debug Info (Remove after testing) -->
+          <div class="text-xs text-gray-400 mt-2 border-t pt-2">
+            <strong>Debug:</strong> ${teacherSubjects.length} teacher subjects
           </div>
           
           <!-- Take Attendance Button -->
           <button onclick="takeAttendanceForClass('${cls._id}')" 
-                  class="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center">
+                  class="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center mt-3">
             <i class="fas fa-clipboard-check mr-2"></i>
             Take Attendance
           </button>
@@ -671,16 +669,21 @@ async function loadTeacherClasses() {
     }).join('');
     
   } catch (error) {
-    console.error('Failed to load teacher classes:', error);
+    console.error('❌ Failed to load teacher classes:', error);
+    const container = document.getElementById('teacherClasses');
     container.innerHTML = `
-      <div class="col-span-full text-center py-12 text-gray-500">
-        <i class="fas fa-exclamation-triangle text-4xl mb-4 opacity-50"></i>
+      <div class="col-span-full text-center py-12 text-red-500">
+        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
         <p>Error loading classes</p>
+        <p class="text-sm mt-1">${error.message}</p>
       </div>
     `;
   }
 }
-    function markAllAbsent() {
+
+
+
+function markAllAbsent() {
       document.querySelectorAll('input[type="radio"][value="absent"]').forEach(radio => {
         radio.checked = true;
       });
