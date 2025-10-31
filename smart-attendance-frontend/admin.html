@@ -833,7 +833,7 @@
   
   <!-- Teacher Assignments -->
   <div class="mb-6">
-    <h5 class="text-md font-semibold text-gray-700 mb-3">👨‍🏫 Teacher Assignments</h5>
+    <h5 class="text-md font-semibold text-gray-700 mb-3"> <b>Teacher Assignments</b></h5>
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -854,7 +854,7 @@
 
   <!-- Student Assignments -->
   <div>
-    <h5 class="text-md font-semibold text-gray-700 mb-3">🎓 Student Assignments</h5>
+    <h5 class="text-md font-semibold text-gray-700 mb-3"> <b>Student Assignments</b></h5>
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -2127,19 +2127,25 @@ async function loadTeacherAssignments() {
    
 
 
-// Load student assignments - COMPLETELY FIXED VERSION
+// Load student assignments - UPDATED VERSION
 async function loadStudentAssignments() {
   try {
     console.log('🎓 loadStudentAssignments STARTED');
     
-    const students = await getAllStudents();
-    const classes = await getAllClasses();
+    // ✅ USE CORRECT ENDPOINT
+    const response = await fetch('http://localhost:3000/api/admin/students');
+    const result = await response.json();
     
-    console.log('Students with class data:', students);
-    console.log('Available classes:', classes);
+    console.log('📋 API Response:', result);
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch students');
+    }
+    
+    const students = result.students;
+    console.log('📋 Students with class data:', students);
     
     const tableBody = document.getElementById('studentAssignmentsTable');
-    console.log('Table body:', tableBody);
     
     if (!students || students.length === 0) {
       tableBody.innerHTML = `
@@ -2155,16 +2161,10 @@ async function loadStudentAssignments() {
     let studentAssignmentsHTML = '';
     
     students.forEach(student => {
-      console.log('Processing student:', student.firstName, 'Class ID:', student.class);
+      console.log('Processing student:', student.firstName, 'Class:', student.class);
       
-      // Find student's class using the class reference
-      let studentClass = null;
-      if (student.class) {
-        studentClass = classes.find(cls => cls._id.toString() === student.class.toString());
-        console.log('Student class found:', studentClass);
-      }
-      
-      const isAssigned = !!studentClass;
+      const isAssigned = student.class && student.class._id;
+      const className = student.class ? `${student.class.name} - ${student.class.section}` : 'Not Assigned';
       
       studentAssignmentsHTML += `
         <tr class="border-b border-gray-100 hover:bg-gray-50">
@@ -2175,7 +2175,7 @@ async function loadStudentAssignments() {
             ${student.studentId || 'N/A'}
           </td>
           <td class="py-3 px-4 text-sm">
-            ${studentClass ? `${studentClass.name} - ${studentClass.section}` : 'Not Assigned'}
+            ${className}
           </td>
           <td class="py-3 px-4 text-sm">
             <span class="px-2 py-1 ${isAssigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} rounded-full text-xs font-medium">
@@ -2199,9 +2199,18 @@ async function loadStudentAssignments() {
     
   } catch (error) {
     console.error('❌ loadStudentAssignments ERROR:', error);
+    const tableBody = document.getElementById('studentAssignmentsTable');
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-8 text-center text-red-500">
+          <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+          <p>Failed to load student assignments</p>
+          <p class="text-sm mt-1">${error.message}</p>
+        </td>
+      </tr>
+    `;
   }
 }
-
  
 // Remove teacher assignment - UPDATED VERSION
 async function removeTeacherAssignment(classId, subjectId) {
@@ -2266,74 +2275,6 @@ async function removeStudentAssignment(studentId) {
   }
 }
 
-// Load student assignments - SHOWS ONLY ASSIGNED STUDENTS
-async function loadStudentAssignments() {
-  try {
-    
-    
-    const students = await getAllStudents();
-    
-    
-    const tableBody = document.getElementById('studentAssignmentsTable');
-    
-    // FILTER: Only show students who have class assignments
-    const assignedStudents = students.filter(student => {
-      const hasClass = student.class && student.class._id;
-      return hasClass;
-    });
-    
-    
-    
-    if (assignedStudents.length === 0) {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="py-8 text-center text-gray-500">
-            <i class="fas fa-user-graduate text-2xl mb-2 opacity-50"></i>
-            <p>No student assignments found</p>
-            <p class="text-sm mt-1">Assign students to classes to see them here</p>
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    let studentAssignmentsHTML = '';
-    
-    assignedStudents.forEach(student => {
-      const studentClass = student.class;
-      
-      studentAssignmentsHTML += `
-        <tr class="border-b border-gray-100 hover:bg-gray-50">
-          <td class="py-3 px-4 text-sm font-medium">
-            ${student.firstName} ${student.lastName}
-          </td>
-          <td class="py-3 px-4 text-sm">
-            ${student.studentId || 'N/A'}
-          </td>
-          <td class="py-3 px-4 text-sm">
-            ${studentClass.name} - ${studentClass.section}
-          </td>
-          <td class="py-3 px-4 text-sm">
-            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-              Assigned
-            </span>
-          </td>
-          <td class="py-3 px-4 text-sm">
-            <button onclick="removeStudentAssignment('${student._id}')" 
-                    class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
-              Remove
-            </button>
-          </td>
-        </tr>
-      `;
-    });
-    
-    tableBody.innerHTML = studentAssignmentsHTML;
-    
-  } catch (error) {
-    console.error('❌ Failed to load student assignments:', error);
-  }
-}
 
 // ✅ REAL-TIME REFRESH SUBJECTS
 async function refreshSubjects() {
