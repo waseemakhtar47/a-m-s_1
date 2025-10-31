@@ -367,15 +367,40 @@ window.deleteUser = async function(userId) {
         }
     };
     
-    window.getAllSubjects = async function() {
-        try {
-            const result = await apiCall('/subjects');
-            return result.subjects || [];
-        } catch (error) {
-            console.error('Failed to get subjects:', error);
-            return [];
-        }
-    };
+   window.getAllSubjects = async function() {
+  try {
+    // ✅ NAYA ENDPOINT USE KARO
+    const result = await apiCall('/admin/subjects-with-classes');
+    console.log('📚 Subjects with classes:', result.subjects);
+    
+    if (result.success) {
+      return result.subjects || [];
+    } else {
+      throw new Error(result.error || 'Failed to fetch subjects');
+    }
+    
+  } catch (error) {
+    console.error('❌ Failed to get subjects with classes:', error);
+    
+    // ✅ FALLBACK: Purana endpoint try karo
+    try {
+      console.log('🔄 Trying fallback endpoint...');
+      const fallbackResult = await apiCall('/admin/subjects');
+      
+      if (fallbackResult.success) {
+        // Convert old format to new format
+        return fallbackResult.subjects.map(subject => ({
+          ...subject,
+          classes: subject.classes || []
+        }));
+      }
+    } catch (fallbackError) {
+      console.error('❌ Fallback also failed:', fallbackError);
+    }
+    
+    return [];
+  }
+};
     
     // Teacher Functions
    window.getTeacherClasses = async function() {
@@ -578,7 +603,8 @@ window.getAllClasses = async function() {
 // Get all subjects - FIXED
 window.getAllSubjects = async function() {
   try {
-    const result = await apiCall('/admin/subjects'); // ✅ FIXED
+    const result = await apiCall('/admin/subjects-with-classes');
+    console.log('📚 Subjects with classes:', result.subjects);
     return result.subjects || [];
   } catch (error) {
     console.error('Failed to get subjects:', error);

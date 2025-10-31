@@ -486,6 +486,76 @@ app.get('/api/admin/subjects', async (req, res) => {
   }
 });
 
+// ✅ GET ALL SUBJECTS WITH CLASSES - NEW ROUTE
+app.get('/api/admin/subjects-with-classes', async (req, res) => {
+  try {
+    console.log('📚 Fetching subjects with classes...');
+    
+    const subjects = await Subject.find().populate('classes', 'name section');
+    
+    console.log(`✅ Found ${subjects.length} subjects with classes`);
+    
+    // Format response
+    const formattedSubjects = subjects.map(subject => ({
+      _id: subject._id,
+      name: subject.name,
+      code: subject.code,
+      classes: subject.classes || [],
+      createdAt: subject.createdAt
+    }));
+
+    res.json({ 
+      success: true, 
+      subjects: formattedSubjects
+    });
+
+  } catch (error) {
+    console.error('❌ Get subjects with classes error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch subjects with classes',
+      subjects: [] 
+    });
+  }
+});
+
+// ✅ GET SUBJECT DETAILS WITH CLASS INFO
+app.get('/api/admin/subject/:id/details', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🔍 Fetching subject details:', id);
+    
+    const subject = await Subject.findById(id).populate('classes', 'name section grade');
+    
+    if (!subject) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Subject not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      subject: {
+        _id: subject._id,
+        name: subject.name,
+        code: subject.code,
+        description: subject.description,
+        classes: subject.classes,
+        classCount: subject.classes.length,
+        createdAt: subject.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Get subject details error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch subject details' 
+    });
+  }
+});
+
 
 // ✅ GET ALL STUDENTS - FIXED POPULATION
 app.get('/api/admin/students', async (req, res) => {
@@ -586,35 +656,41 @@ app.post('/api/admin/assign-teacher', async (req, res) => {
     const { teacherId, classId, subjectId } = req.body;
     console.log('👨‍🏫 Assigning teacher:', teacherId, 'to class:', classId, 'subject:', subjectId);
 
-    // ✅ REMOVED: The check that prevented same teacher from teaching same subject in multiple classes
-    // Now teachers CAN teach the same subject in different classes
-
     // Find class
     const classObj = await Class.findById(classId);
     if (!classObj) {
       return res.json({ success: false, error: 'Class not found' });
     }
 
-    // Check if subject already assigned to this class
-    const existingSubjectIndex = classObj.subjects.findIndex(
-      s => s.subject && s.subject.toString() === subjectId
-    );
-
-    if (existingSubjectIndex > -1) {
-      // Update existing subject's teacher
-      classObj.subjects[existingSubjectIndex].teacher = teacherId;
-      console.log('✅ Updated existing subject with new teacher');
-    } else {
-      // Add new subject assignment
-      classObj.subjects.push({
-        subject: subjectId,
-        teacher: teacherId
-      });
-      console.log('✅ Added new subject assignment');
+    // Find subject
+    const subject = await Subject.findById(subjectId);
+    if (!subject) {
+      return res.json({ success: false, error: 'Subject not found' });
     }
 
+    // ✅ 1. UPDATE CLASS'S SUBJECTS ARRAY
+    // Remove existing assignment for this subject
+    classObj.subjects = classObj.subjects.filter(
+      sub => sub.subject.toString() !== subjectId
+    );
+
+    // Add new assignment
+    classObj.subjects.push({
+      subject: subjectId,
+      teacher: teacherId
+    });
+
     await classObj.save();
-    console.log('✅ Teacher assignment saved successfully');
+    console.log('✅ Teacher assignment saved to class');
+
+    // ✅ 2. UPDATE SUBJECT'S CLASSES ARRAY
+    if (!subject.classes.includes(classId)) {
+      subject.classes.push(classId);
+      await subject.save();
+      console.log('✅ Class added to subject');
+    }
+
+    console.log('✅ Teacher assigned successfully');
 
     res.json({ 
       success: true,
@@ -628,8 +704,8 @@ app.post('/api/admin/assign-teacher', async (req, res) => {
   }
 });
 
-
 // ✅ REMOVE TEACHER ASSIGNMENT
+// ✅ REMOVE TEACHER ASSIGNMENT - UPDATED VERSION
 app.post('/api/admin/remove-teacher-assignment', async (req, res) => {
   try {
     const { classId, subjectId } = req.body;
@@ -640,12 +716,24 @@ app.post('/api/admin/remove-teacher-assignment', async (req, res) => {
       return res.json({ success: false, error: 'Class not found' });
     }
 
-    // Remove teacher from subject
+    // ✅ 1. REMOVE FROM CLASS'S SUBJECTS ARRAY
     classObj.subjects = classObj.subjects.filter(s => 
       s.subject.toString() !== subjectId
     );
 
     await classObj.save();
+    console.log('✅ Teacher assignment removed from class');
+
+    // ✅ 2. CRITICAL: REMOVE FROM SUBJECT'S CLASSES ARRAY
+    const subject = await Subject.findById(subjectId);
+    if (subject) {
+      subject.classes = subject.classes.filter(
+        classRef => classRef.toString() !== classId
+      );
+      await subject.save();
+      console.log('✅ Class removed from subject');
+    }
+
     console.log('✅ Teacher assignment removed successfully');
 
     res.json({ 

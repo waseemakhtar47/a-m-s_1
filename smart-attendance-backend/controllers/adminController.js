@@ -149,46 +149,52 @@ exports.assignStudentToClass = async (req, res) => {
 };
 
 // Assign teacher to class and subject
-exports.assignTeacherToClass = async (req, res) => {
+exports.assignTeacherToClass = async (req, res) => {  // ✅ exports add karo
   try {
     const { teacherId, classId, subjectId } = req.body;
 
-    const teacher = await User.findById(teacherId);
+    console.log('🔄 Assigning teacher:', { teacherId, classId, subjectId });
+
     const classObj = await Class.findById(classId);
-    const subject = await Subject.findById(subjectId);
-
-    if (!teacher || teacher.role !== 'teacher') {
-      return res.status(404).json({ success: false, error: 'Teacher not found' });
-    }
-
     if (!classObj) {
       return res.status(404).json({ success: false, error: 'Class not found' });
     }
 
+    const subject = await Subject.findById(subjectId);
     if (!subject) {
       return res.status(404).json({ success: false, error: 'Subject not found' });
     }
 
-    // Remove teacher from previous assignments for this subject
-    const subjectIndex = classObj.subjects.findIndex(s => s.subject.toString() === subjectId);
-    if (subjectIndex > -1) {
-      classObj.subjects[subjectIndex].teacher = teacherId;
-    } else {
-      classObj.subjects.push({ subject: subjectId, teacher: teacherId });
-    }
+    // ✅ Pehle existing assignment remove karo
+    classObj.subjects = classObj.subjects.filter(
+      sub => sub.subject.toString() !== subjectId
+    );
+
+    // ✅ Naya assignment add karo
+    classObj.subjects.push({
+      subject: subjectId,
+      teacher: teacherId
+    });
 
     await classObj.save();
 
-    // Add class to subject if not already present
+    // ✅ YEH NAYA CODE ADD KARO - Subject ke classes array ko update karo
     if (!subject.classes.includes(classId)) {
       subject.classes.push(classId);
       await subject.save();
+      console.log(`✅ Added class ${classObj.name} to subject ${subject.name}`);
     }
 
-    res.json({ success: true, message: 'Teacher assigned successfully' });
+    console.log(`✅ Teacher assigned: Class=${classObj.name}, Subject=${subject.name}`);
+
+    res.json({ 
+      success: true, 
+      message: 'Teacher assigned successfully' 
+    });
+
   } catch (error) {
-    console.error('Assign teacher error:', error);
-    res.status(500).json({ success: false, error: 'Failed to assign teacher' });
+    console.error('❌ Assign teacher error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 };
 

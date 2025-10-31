@@ -1339,63 +1339,143 @@
         }
       }
 
-      async function loadSubjects() {
-        try {
-          const subjects = await getAllSubjects();
-          const tableBody = document.getElementById("subjectsTable");
 
-          if (subjects.length === 0) {
-            tableBody.innerHTML = `
+
+      async function loadSubjects() {
+  try {
+    const subjects = await getAllSubjects();
+    const tableBody = document.getElementById('subjectsTable');
+
+    if (!subjects || subjects.length === 0) {
+      tableBody.innerHTML = `
         <tr>
           <td colspan="6" class="py-8 text-center text-gray-500">
             <i class="fas fa-book text-2xl mb-2 opacity-50"></i>
             <p>No subjects found</p>
-            <p class="text-sm mt-1">Create your first subject to get started</p>
           </td>
         </tr>
       `;
-            return;
-          }
+      return;
+    }
 
-          tableBody.innerHTML = subjects
-            .map(
-              (subject, index) => `
+    tableBody.innerHTML = subjects.map(subject => `
       <tr class="border-b border-gray-100 hover:bg-gray-50">
-        <td class="py-3 px-4 text-sm font-medium">${
-          subject._id
-            ? subject._id.toString().substring(0, 8)
-            : "SUB" + (index + 1)
-        }</td>
+        <td class="py-3 px-4 text-sm font-medium">
+          ${subject._id.toString().substring(0, 8)}
+        </td>
         <td class="py-3 px-4 text-sm">${subject.name}</td>
         <td class="py-3 px-4 text-sm">${subject.code}</td>
-        <td class="py-3 px-4 text-sm">${
-          subject.classes ? subject.classes.length : 0
-        }</td>
-        <td class="py-3 px-4 text-sm text-gray-500">${formatDate(
-          subject.createdAt
-        )}</td>
+        <td class="py-3 px-4 text-sm">
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+            ${subject.classes ? subject.classes.length : 0} classes
+          </span>
+        </td>
+        <td class="py-3 px-4 text-sm text-gray-500">
+          ${formatDate(subject.createdAt)}
+        </td>
         <td class="py-3 px-4 text-sm">
           <div class="flex space-x-2">
-            <button onclick="editSubject('${
-              subject._id
-            }')" class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs">
-              Edit
+            <button onclick="viewSubjectDetails('${subject._id}')" 
+                    class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs">
+              View Classes
             </button>
-            <button onclick="deleteSubject('${
-              subject._id
-            }')" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs">
-              Delete
+            <button onclick="editSubject('${subject._id}')" 
+                    class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs">
+              Edit
             </button>
           </div>
         </td>
       </tr>
-    `
-            )
-            .join("");
-        } catch (error) {
-          console.error("Failed to load subjects:", error);
-        }
-      }
+    `).join('');
+
+    console.log('✅ Subjects loaded successfully with class counts');
+
+  } catch (error) {
+    console.error('❌ Failed to load subjects:', error);
+    const tableBody = document.getElementById('subjectsTable');
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="py-8 text-center text-red-500">
+          <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+          <p>Failed to load subjects</p>
+          <p class="text-sm mt-1">Please check console for details</p>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+// ✅ VIEW SUBJECT DETAILS FUNCTION ADD KARO
+async function viewSubjectDetails(subjectId) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/admin/subject/${subjectId}/details`);
+    const result = await response.json();
+    
+    if (result.success) {
+      const subject = result.subject;
+      
+      const modalHTML = `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl">
+            <div class="bg-gradient-to-r from-purple-500 to-pink-600 p-6 text-white rounded-t-xl">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h2 class="text-2xl font-bold">${subject.name}</h2>
+                  <p class="text-purple-100">Code: ${subject.code}</p>
+                </div>
+                <button onclick="closeModal()" class="text-white hover:text-purple-200 text-2xl">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="p-6">
+              <h3 class="text-lg font-semibold mb-4">Classes Teaching This Subject (${subject.classCount})</h3>
+              ${subject.classes && subject.classes.length > 0 ? 
+                subject.classes.map(cls => `
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 mb-2">
+                    <div>
+                      <div class="font-medium text-gray-800">${cls.name} - ${cls.section}</div>
+                      <div class="text-sm text-gray-600">Grade: ${cls.grade || 'N/A'}</div>
+                    </div>
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                      Active
+                    </span>
+                  </div>
+                `).join('') : 
+                '<div class="text-center py-4 text-gray-500">No classes assigned to this subject</div>'
+              }
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button onclick="closeModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      const modalContainer = document.createElement('div');
+      modalContainer.id = 'subjectDetailsModal';
+      modalContainer.innerHTML = modalHTML;
+      document.body.appendChild(modalContainer);
+    } else {
+      alert('Failed to load subject details: ' + result.error);
+    }
+  } catch (error) {
+    console.error('Error loading subject details:', error);
+    alert('Failed to load subject details');
+  }
+}
+
+function closeModal() {
+  const modal = document.getElementById('subjectDetailsModal');
+  if (modal) {
+    modal.remove();
+  }
+}
+  
 
       async function loadAssignmentData() {
         try {
@@ -2122,10 +2202,8 @@ async function loadStudentAssignments() {
   }
 }
 
-    
-      
-     
-// Remove teacher assignment
+ 
+// Remove teacher assignment - UPDATED VERSION
 async function removeTeacherAssignment(classId, subjectId) {
   if (!confirm('Are you sure you want to remove this teacher assignment?')) {
     return;
@@ -2143,16 +2221,21 @@ async function removeTeacherAssignment(classId, subjectId) {
     const result = await response.json();
     
     if (result.success) {
-      alert('Teacher assignment removed successfully!');
-      await loadAssignmentTracking();
+      alert('✅ Teacher assignment removed successfully!');
+      
+      // ✅ CRITICAL: REFRESH BOTH TABLES
+      await loadAssignmentTracking(); // Refresh assignments table
+      await refreshSubjects(); // Refresh subjects table with updated counts
+      
     } else {
-      alert('Failed to remove teacher assignment: ' + result.error);
+      alert('❌ Failed to remove teacher assignment: ' + result.error);
     }
   } catch (error) {
     console.error('Remove teacher assignment error:', error);
-    alert('Failed to remove teacher assignment. Please try again.');
+    alert('🚨 Failed to remove teacher assignment. Please try again.');
   }
 }
+      
 
 // Remove student assignment
 async function removeStudentAssignment(studentId) {
@@ -2249,6 +2332,64 @@ async function loadStudentAssignments() {
     
   } catch (error) {
     console.error('❌ Failed to load student assignments:', error);
+  }
+}
+
+// ✅ REAL-TIME REFRESH SUBJECTS
+async function refreshSubjects() {
+  try {
+    console.log('🔄 Refreshing subjects data...');
+    
+    // Force reload from server
+    const subjects = await getAllSubjects();
+    const tableBody = document.getElementById('subjectsTable');
+
+    if (!subjects || subjects.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-8 text-center text-gray-500">
+            <i class="fas fa-book text-2xl mb-2 opacity-50"></i>
+            <p>No subjects found</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tableBody.innerHTML = subjects.map(subject => `
+      <tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="py-3 px-4 text-sm font-medium">
+          ${subject._id.toString().substring(0, 8)}
+        </td>
+        <td class="py-3 px-4 text-sm">${subject.name}</td>
+        <td class="py-3 px-4 text-sm">${subject.code}</td>
+        <td class="py-3 px-4 text-sm">
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+            ${subject.classes ? subject.classes.length : 0} classes
+          </span>
+        </td>
+        <td class="py-3 px-4 text-sm text-gray-500">
+          ${formatDate(subject.createdAt)}
+        </td>
+        <td class="py-3 px-4 text-sm">
+          <div class="flex space-x-2">
+            <button onclick="viewSubjectDetails('${subject._id}')" 
+                    class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs">
+              View Classes
+            </button>
+            <button onclick="editSubject('${subject._id}')" 
+                    class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs">
+              Edit
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    console.log('✅ Subjects refreshed with real-time data');
+
+  } catch (error) {
+    console.error('❌ Failed to refresh subjects:', error);
   }
 }
 
