@@ -264,23 +264,41 @@ exports.getAllSubjects = async (req, res) => {
   }
 };
 
-// Get all students
+// Get all students - FIXED VERSION
 exports.getAllStudents = async (req, res) => {
   try {
+    console.log('🔄 Fetching all students with class data...');
+    
     const students = await User.find({ 
-      role: 'student',
-      isActive: true 
+      role: 'student'
     })
-    .select('firstName lastName email phone studentId class')
-    .populate('class', 'name section')
+    .select('firstName lastName email phone studentId class isActive createdAt')
+    .populate('class', 'name section') // ✅ Already correct
     .sort({ createdAt: -1 });
 
-    res.json({ students });
+    console.log(`✅ Found ${students.length} students`);
+    
+    // Debug logging
+    students.forEach(student => {
+      console.log(`🎓 ${student.firstName} ${student.lastName}:`, 
+        student.class ? `${student.class.name} - ${student.class.section}` : 'No Class');
+    });
+
+    // ✅ FIX: Return success: true and proper structure
+    res.json({ 
+      success: true, 
+      students: students
+    });
+    
   } catch (error) {
-    console.error('Get students error:', error);
-    res.status(500).json({ error: 'Failed to fetch students' });
+    console.error('❌ Get students error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch students' 
+    });
   }
 };
+
 
 // Get all teachers  
 exports.getAllTeachers = async (req, res) => {

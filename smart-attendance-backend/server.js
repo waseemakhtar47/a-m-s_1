@@ -337,22 +337,50 @@ app.put('/api/admin/update-class/:id', async (req, res) => {
   }
 });
 
-// ✅ DELETE CLASS
+// ✅ DELETE CLASS - COMPLETE FIXED VERSION
 app.delete('/api/admin/delete-class/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
     console.log('🗑️ Deleting class:', id);
     
-    const deletedClass = await Class.findByIdAndDelete(id);
+    // ✅ 1. PEHLE CLASS KA DATA LE LO
+    const classObj = await Class.findById(id);
     
-    if (!deletedClass) {
+    if (!classObj) {
       return res.json({ success: false, error: 'Class not found' });
     }
+
+    // ✅ 2. REMOVE THIS CLASS FROM ALL RELATED SUBJECTS
+    if (classObj.subjects && classObj.subjects.length > 0) {
+      for (let subjectObj of classObj.subjects) {
+        if (subjectObj.subject) {
+          await Subject.findByIdAndUpdate(
+            subjectObj.subject,
+            { $pull: { classes: id } }
+          );
+          console.log(`✅ Removed class from subject: ${subjectObj.subject}`);
+        }
+      }
+    }
+
+    // ✅ 3. REMOVE CLASS REFERENCE FROM ALL STUDENTS
+    if (classObj.students && classObj.students.length > 0) {
+      await User.updateMany(
+        { _id: { $in: classObj.students } },
+        { $unset: { class: "" } }
+      );
+      console.log(`✅ Removed class reference from ${classObj.students.length} students`);
+    }
+
+    // ✅ 4. NOW DELETE THE CLASS
+    await Class.findByIdAndDelete(id);
     
+    console.log('✅ Class deleted successfully with all cleanups');
+
     res.json({ 
       success: true, 
-      message: 'Class deleted successfully!' 
+      message: 'Class deleted successfully with all cleanups!' 
     });
     
   } catch (error) {
@@ -360,7 +388,6 @@ app.delete('/api/admin/delete-class/:id', async (req, res) => {
     res.json({ success: false, error: 'Failed to delete class' });
   }
 });
-
 // ✅ CREATE SUBJECT
 app.post('/api/admin/create-subject', async (req, res) => {
   try {
@@ -424,22 +451,31 @@ app.put('/api/admin/update-subject/:id', async (req, res) => {
   }
 });
 
-// ✅ DELETE SUBJECT
+// ✅ DELETE SUBJECT - COMPLETE FIXED VERSION
 app.delete('/api/admin/delete-subject/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
     console.log('🗑️ Deleting subject:', id);
     
+    // ✅ 1. REMOVE SUBJECT FROM ALL CLASSES
+    await Class.updateMany(
+      { 'subjects.subject': id },
+      { $pull: { subjects: { subject: id } } }
+    );
+
+    // ✅ 2. NOW DELETE THE SUBJECT
     const deletedSubject = await Subject.findByIdAndDelete(id);
     
     if (!deletedSubject) {
       return res.json({ success: false, error: 'Subject not found' });
     }
     
+    console.log('✅ Subject deleted successfully with all cleanups');
+
     res.json({ 
       success: true, 
-      message: 'Subject deleted successfully!' 
+      message: 'Subject deleted successfully with all cleanups!' 
     });
     
   } catch (error) {
@@ -747,22 +783,25 @@ app.post('/api/admin/remove-teacher-assignment', async (req, res) => {
   }
 });
 
-// ✅ REMOVE STUDENT ASSIGNMENT  
+// ✅ REMOVE STUDENT ASSIGNMENT - COMPLETE FIXED VERSION
 app.post('/api/admin/remove-student-assignment', async (req, res) => {
   try {
     const { studentId } = req.body;
     console.log('🗑️ Removing student assignment:', studentId);
 
-    // Remove student from all classes
+    // ✅ 1. FIND ALL CLASSES WHERE STUDENT IS ENROLLED
+    const classesWithStudent = await Class.find({ students: studentId });
+    
+    // ✅ 2. REMOVE STUDENT FROM ALL CLASSES
     await Class.updateMany(
       { students: studentId },
       { $pull: { students: studentId } }
     );
 
-    // Remove class reference from student
+    // ✅ 3. REMOVE CLASS REFERENCE FROM STUDENT
     await User.findByIdAndUpdate(studentId, { class: null });
 
-    console.log('✅ Student assignment removed successfully');
+    console.log(`✅ Student removed from ${classesWithStudent.length} classes`);
 
     res.json({ 
       success: true,
@@ -774,7 +813,6 @@ app.post('/api/admin/remove-student-assignment', async (req, res) => {
     res.json({ success: false, error: 'Failed to remove student assignment' });
   }
 });
-
 // ========================
 // ✅ TEACHER ROUTES - REAL DATA
 // ========================
@@ -880,6 +918,38 @@ app.get('/api/teacher/attendance/report', async (req, res) => {
   } catch (error) {
     console.error('Get attendance report error:', error);
     res.json({ success: false, error: 'Failed to fetch report', report: [] });
+  }
+});
+
+
+// ✅ REMOVE TEACHER FROM ALL CLASSES WHEN DELETED
+app.post('/api/admin/remove-teacher', async (req, res) => {
+  try {
+    const { teacherId } = req.body;
+    console.log('🗑️ Removing teacher from all classes:', teacherId);
+
+    // ✅ REMOVE TEACHER FROM ALL CLASS SUBJECTS
+    await Class.updateMany(
+      { 'subjects.teacher': teacherId },
+      { $pull: { subjects: { teacher: teacherId } } }
+    );
+
+    // ✅ REMOVE TEACHER FROM ALL SUBJECT CLASSES
+    await Subject.updateMany(
+      { },
+      { $pull: { classes: { $in: await Class.find({ 'subjects.teacher': teacherId }).distinct('_id') } } }
+    );
+
+    console.log('✅ Teacher removed from all classes and subjects');
+
+    res.json({ 
+      success: true,
+      message: 'Teacher removed from all assignments successfully!'
+    });
+
+  } catch (error) {
+    console.error('Remove teacher error:', error);
+    res.json({ success: false, error: 'Failed to remove teacher' });
   }
 });
 
