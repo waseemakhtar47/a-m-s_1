@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Class = require('./models/Class');
 const Subject = require('./models/Subject');
+const Attendance = require('./models/Attendance');
 // Import controllers
 const teacherController = require('./controllers/teacherController');
 require('dotenv').config();
@@ -885,42 +886,159 @@ app.get('/api/teacher/class/:classId/students', async (req, res) => {
   }
 });
 
-// ✅ MARK ATTENDANCE
+
+// ✅ MARK ATTENDANCE - COMPLETE FIXED VERSION
 app.post('/api/teacher/attendance/mark', async (req, res) => {
   try {
     const { classId, subjectId, date, attendanceData } = req.body;
     console.log('📝 Marking attendance:', { classId, subjectId, date, attendanceData });
-    
-    // Real attendance saving logic yahan aayega
+
+    // Validate required fields
+    if (!classId || !subjectId || !date || !attendanceData) {
+      return res.json({ 
+        success: false, 
+        error: 'Missing required fields: classId, subjectId, date, or attendanceData' 
+      });
+    }
+
+    const attendanceRecords = [];
+    const today = new Date(date);
+    // ✅ FIXED: Set to beginning of day to avoid timezone issues
+    today.setHours(0, 0, 0, 0);
+
+    console.log(`📊 Processing ${Object.keys(attendanceData).length} student records for date: ${today.toISOString()}`);
+
+    // Create attendance records for each student
+    for (const [studentId, status] of Object.entries(attendanceData)) {
+      try {
+        // ✅ FIXED: Date query to match exactly
+        const existingAttendance = await Attendance.findOne({
+          student: studentId,
+          subject: subjectId,
+          class: classId,
+          date: {
+            $gte: new Date(today),
+            $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+          }
+        });
+
+        if (existingAttendance) {
+          // Update existing record
+          existingAttendance.status = status;
+          existingAttendance.markedBy = 'teacher-system';
+          await existingAttendance.save();
+          attendanceRecords.push(existingAttendance);
+          console.log(`✅ Updated attendance for student ${studentId}: ${status}`);
+        } else {
+          // Create new record
+          const attendance = new Attendance({
+            student: studentId,
+            class: classId,
+            subject: subjectId,
+            date: today, // ✅ Use the normalized date
+            status: status,
+            markedBy: 'teacher-system'
+          });
+          await attendance.save();
+          attendanceRecords.push(attendance);
+          console.log(`✅ Created new attendance for student ${studentId}: ${status}`);
+        }
+      } catch (studentError) {
+        console.error(`❌ Error processing student ${studentId}:`, studentError);
+      }
+    }
+
+    console.log(`✅ Successfully saved ${attendanceRecords.length} attendance records`);
+
     res.json({ 
       success: true,
-      message: 'Attendance marked successfully!',
-      records: Object.keys(attendanceData).length
+      message: `Attendance marked successfully for ${attendanceRecords.length} students!`,
+      records: attendanceRecords.length,
+      date: date
     });
 
   } catch (error) {
-    console.error('Mark attendance error:', error);
-    res.json({ success: false, error: 'Failed to mark attendance' });
+    console.error('❌ Mark attendance error:', error);
+    res.json({ 
+      success: false, 
+      error: 'Failed to mark attendance: ' + error.message 
+    });
   }
 });
 
-// ✅ GET ATTENDANCE REPORT
+// ✅ GET ATTENDANCE REPORT - DEBUG VERSION
 app.get('/api/teacher/attendance/report', async (req, res) => {
   try {
     const { classId, subjectId, startDate, endDate } = req.query;
     
-    // For now empty array return karenge - baad mein real data
+    console.log('📊 Generating attendance report:', { classId, subjectId, startDate, endDate });
+
+    // Build query
+    const query = {};
+    
+    if (classId && classId !== '' && classId !== 'undefined') query.class = classId;
+    if (subjectId && subjectId !== '' && subjectId !== 'undefined') query.subject = subjectId;
+    
+    // Date range filter
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      
+      query.date = {
+        $gte: start,
+        $lte: end
+      };
+    }
+
+    console.log('🔍 Final Query:', JSON.stringify(query, null, 2));
+
+    const attendance = await Attendance.find(query)
+      .populate('student', 'firstName lastName studentId')
+      .populate('subject', 'name code')
+      .populate('class', 'name section')
+      .sort({ date: -1, student: 1 });
+
+    console.log(`✅ Found ${attendance.length} attendance records`);
+    
+    // ✅ DEBUG: Log first record to see structure
+    if (attendance.length > 0) {
+      console.log('🔍 First record structure:', JSON.stringify(attendance[0], null, 2));
+    }
+
+    // Calculate summary statistics
+    const totalRecords = attendance.length;
+    const presentCount = attendance.filter(a => a.status === 'present').length;
+    const absentCount = attendance.filter(a => a.status === 'absent').length;
+    const lateCount = attendance.filter(a => a.status === 'late').length;
+    
+    const summary = {
+      totalRecords,
+      presentCount,
+      absentCount,
+      lateCount,
+      presentPercentage: totalRecords > 0 ? Math.round((presentCount / totalRecords) * 100) : 0,
+      absentPercentage: totalRecords > 0 ? Math.round((absentCount / totalRecords) * 100) : 0
+    };
+
     res.json({ 
       success: true, 
-      report: [] 
+      report: attendance,
+      summary: summary
     });
 
   } catch (error) {
-    console.error('Get attendance report error:', error);
-    res.json({ success: false, error: 'Failed to fetch report', report: [] });
+    console.error('❌ Get attendance report error:', error);
+    res.json({ 
+      success: false, 
+      error: 'Failed to fetch attendance report: ' + error.message,
+      report: [],
+      summary: {}
+    });
   }
 });
-
 
 // ✅ REMOVE TEACHER FROM ALL CLASSES WHEN DELETED
 app.post('/api/admin/remove-teacher', async (req, res) => {

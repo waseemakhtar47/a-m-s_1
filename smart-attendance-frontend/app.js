@@ -444,8 +444,10 @@ window.getStudentsByClass = async function(classId) {
             return false;
         }
     };
-    
-  window.getAttendanceReport = async function(classId, subjectId, startDate, endDate) {
+
+
+    // In app.js - Update the getAttendanceReport function
+window.getAttendanceReport = async function(classId, subjectId, startDate, endDate) {
   try {
     const params = new URLSearchParams();
     if (classId) params.append('classId', classId);
@@ -453,11 +455,21 @@ window.getStudentsByClass = async function(classId) {
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
     
-    const result = await apiCall(`/teacher/attendance/report?${params.toString()}`); // ✅ CORRECT URL
-    return result.report || [];
+    console.log('🔍 API Call: Getting attendance report with params:', params.toString());
+    
+    const result = await apiCall(`/teacher/attendance/report?${params.toString()}`);
+    
+    console.log('✅ API Response:', result);
+    
+    return result;
   } catch (error) {
-    console.error('Failed to get attendance report:', error);
-    return [];
+    console.error('❌ API Error in getAttendanceReport:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      report: [],
+      summary: {}
+    };
   }
 };
     

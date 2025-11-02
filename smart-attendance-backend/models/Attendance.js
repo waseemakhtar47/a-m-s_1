@@ -25,17 +25,13 @@ const attendanceSchema = new mongoose.Schema({
     enum: ['present', 'absent', 'late'],
     required: true
   },
-  remarks: {
-    type: String,
-    trim: true
-  },
   markedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true
   },
-  qrCode: {
-    type: String
+  remarks: {
+    type: String,
+    default: ''
   },
   createdAt: {
     type: Date,
@@ -43,7 +39,7 @@ const attendanceSchema = new mongoose.Schema({
   }
 });
 
-// Compound index for unique attendance per student per subject per day
+// Compound index to prevent duplicate attendance records
 attendanceSchema.index({ student: 1, subject: 1, date: 1 }, { unique: true });
 
 module.exports = mongoose.model('Attendance', attendanceSchema);
