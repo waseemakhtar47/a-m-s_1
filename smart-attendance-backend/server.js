@@ -523,14 +523,10 @@ app.get('/api/admin/subjects', async (req, res) => {
   }
 });
 
-// ✅ GET ALL SUBJECTS WITH CLASSES - NEW ROUTE
+// ✅ GET ALL SUBJECTS WITH CLASSES - CLEAN VERSION
 app.get('/api/admin/subjects-with-classes', async (req, res) => {
   try {
-    console.log('📚 Fetching subjects with classes...');
-    
     const subjects = await Subject.find().populate('classes', 'name section');
-    
-    console.log(`✅ Found ${subjects.length} subjects with classes`);
     
     // Format response
     const formattedSubjects = subjects.map(subject => ({
@@ -547,7 +543,7 @@ app.get('/api/admin/subjects-with-classes', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Get subjects with classes error:', error);
+    console.error('Get subjects with classes error');
     res.status(500).json({ 
       success: false, 
       error: 'Failed to fetch subjects with classes',
@@ -555,6 +551,7 @@ app.get('/api/admin/subjects-with-classes', async (req, res) => {
     });
   }
 });
+
 
 // ✅ GET SUBJECT DETAILS WITH CLASS INFO
 app.get('/api/admin/subject/:id/details', async (req, res) => {
@@ -835,15 +832,12 @@ app.get('/api/teacher/classes', async (req, res) => {
   }
 });
 
-// ✅ GET CLASS STUDENTS
-// ✅ GET CLASS STUDENTS - FIXED VERSION
+
+// ✅ GET CLASS STUDENTS - CLEAN VERSION
 app.get('/api/teacher/class/:classId/students', async (req, res) => {
   try {
     const { classId } = req.params;
     
-    console.log('🔍 Fetching students for class:', classId);
-    
-    // ✅ ADD VALIDATION
     if (!classId || classId === 'undefined') {
       return res.json({ 
         success: false, 
@@ -868,8 +862,6 @@ app.get('/api/teacher/class/:classId/students', async (req, res) => {
       name: `${student.firstName} ${student.lastName}`,
       studentId: student.studentId
     }));
-
-    console.log(`✅ Found ${students.length} students in class`);
     
     res.json({ 
       success: true, 
@@ -877,7 +869,7 @@ app.get('/api/teacher/class/:classId/students', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get class students error:', error);
+    console.error('Get class students error');
     res.json({ 
       success: false, 
       error: 'Failed to fetch students',
@@ -887,31 +879,26 @@ app.get('/api/teacher/class/:classId/students', async (req, res) => {
 });
 
 
-// ✅ MARK ATTENDANCE - COMPLETE FIXED VERSION
+// ✅ MARK ATTENDANCE - CLEAN VERSION
 app.post('/api/teacher/attendance/mark', async (req, res) => {
   try {
     const { classId, subjectId, date, attendanceData } = req.body;
-    console.log('📝 Marking attendance:', { classId, subjectId, date, attendanceData });
 
     // Validate required fields
     if (!classId || !subjectId || !date || !attendanceData) {
       return res.json({ 
         success: false, 
-        error: 'Missing required fields: classId, subjectId, date, or attendanceData' 
+        error: 'Missing required fields' 
       });
     }
 
     const attendanceRecords = [];
     const today = new Date(date);
-    // ✅ FIXED: Set to beginning of day to avoid timezone issues
     today.setHours(0, 0, 0, 0);
-
-    console.log(`📊 Processing ${Object.keys(attendanceData).length} student records for date: ${today.toISOString()}`);
 
     // Create attendance records for each student
     for (const [studentId, status] of Object.entries(attendanceData)) {
       try {
-        // ✅ FIXED: Date query to match exactly
         const existingAttendance = await Attendance.findOne({
           student: studentId,
           subject: subjectId,
@@ -923,45 +910,101 @@ app.post('/api/teacher/attendance/mark', async (req, res) => {
         });
 
         if (existingAttendance) {
-          // Update existing record
           existingAttendance.status = status;
           existingAttendance.markedBy = 'teacher-system';
           await existingAttendance.save();
           attendanceRecords.push(existingAttendance);
-          console.log(`✅ Updated attendance for student ${studentId}: ${status}`);
         } else {
-          // Create new record
           const attendance = new Attendance({
             student: studentId,
             class: classId,
             subject: subjectId,
-            date: today, // ✅ Use the normalized date
+            date: today,
             status: status,
             markedBy: 'teacher-system'
           });
           await attendance.save();
           attendanceRecords.push(attendance);
-          console.log(`✅ Created new attendance for student ${studentId}: ${status}`);
         }
       } catch (studentError) {
-        console.error(`❌ Error processing student ${studentId}:`, studentError);
+        console.error('Error processing student attendance');
       }
     }
-
-    console.log(`✅ Successfully saved ${attendanceRecords.length} attendance records`);
 
     res.json({ 
       success: true,
       message: `Attendance marked successfully for ${attendanceRecords.length} students!`,
-      records: attendanceRecords.length,
-      date: date
+      records: attendanceRecords.length
     });
 
   } catch (error) {
-    console.error('❌ Mark attendance error:', error);
+    console.error('Mark attendance error');
     res.json({ 
       success: false, 
-      error: 'Failed to mark attendance: ' + error.message 
+      error: 'Failed to mark attendance' 
+    });
+  }
+});
+
+// ✅ GET ATTENDANCE REPORT - CLEAN VERSION
+app.get('/api/teacher/attendance/report', async (req, res) => {
+  try {
+    const { classId, subjectId, startDate, endDate } = req.query;
+
+    // Build query
+    const query = {};
+    
+    if (classId && classId !== '' && classId !== 'undefined') query.class = classId;
+    if (subjectId && subjectId !== '' && subjectId !== 'undefined') query.subject = subjectId;
+    
+    // Date range filter
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      
+      query.date = {
+        $gte: start,
+        $lte: end
+      };
+    }
+
+    const attendance = await Attendance.find(query)
+      .populate('student', 'firstName lastName studentId')
+      .populate('subject', 'name code')
+      .populate('class', 'name section')
+      .sort({ date: -1, student: 1 });
+
+    // Calculate summary statistics
+    const totalRecords = attendance.length;
+    const presentCount = attendance.filter(a => a.status === 'present').length;
+    const absentCount = attendance.filter(a => a.status === 'absent').length;
+    const lateCount = attendance.filter(a => a.status === 'late').length;
+    
+    const summary = {
+      totalRecords,
+      presentCount,
+      absentCount,
+      lateCount,
+      presentPercentage: totalRecords > 0 ? Math.round((presentCount / totalRecords) * 100) : 0,
+      absentPercentage: totalRecords > 0 ? Math.round((absentCount / totalRecords) * 100) : 0
+    };
+
+    res.json({ 
+      success: true, 
+      report: attendance,
+      summary: summary
+    });
+
+  } catch (error) {
+    console.error('Get attendance report error');
+    res.json({ 
+      success: false, 
+      error: 'Failed to fetch attendance report',
+      report: [],
+      summary: {}
     });
   }
 });

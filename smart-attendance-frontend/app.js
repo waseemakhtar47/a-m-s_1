@@ -60,7 +60,7 @@
                 return await response.text();
             }
         } catch (error) {
-            console.error('API call failed:', error);
+            console.error('API call failed');
             throw error;
         }
     }
@@ -80,7 +80,7 @@
             }
             return false;
         } catch (error) {
-            console.error('Login failed:', error);
+            console.error('Login failed');
             return false;
         }
     };
@@ -117,7 +117,7 @@
             
             return result.success;
         } catch (error) {
-            console.error('Student registration failed:', error);
+            console.error('Student registration failed');
             return false;
         }
     };
@@ -142,7 +142,7 @@
             
             return result.success;
         } catch (error) {
-            console.error('Teacher registration failed:', error);
+            console.error('Teacher registration failed');
             return false;
         }
     };
@@ -220,31 +220,28 @@
     };
     
     // Admin Functions
-window.getPendingUsers = async function() {
-  try {
-    const result = await apiCall('/admin/pending-users');
+    window.getPendingUsers = async function() {
+        try {
+            const result = await apiCall('/admin/pending-users');
+            return result.users || [];
+        } catch (error) {
+            console.error('Failed to get pending users');
+            return [];
+        }
+    };
     
-    return result.users || [];
-  } catch (error) {
-    console.error('Failed to get pending users:', error);
-    return [];
-  }
-};
-    
-// ✅ YEH NAYA FUNCTION BANADO:
-window.approveUser = async function(userId) {
-  try {
-    const result = await apiCall('/admin/approve-user', {
-      method: 'POST',
-      body: JSON.stringify({ userId })
-    });
-
-    return result.success;
-  } catch (error) {
-    console.error('Failed to approve user:', error);
-    return false;
-  }
-};
+    window.approveUser = async function(userId) {
+        try {
+            const result = await apiCall('/admin/approve-user', {
+                method: 'POST',
+                body: JSON.stringify({ userId })
+            });
+            return result.success;
+        } catch (error) {
+            console.error('Failed to approve user');
+            return false;
+        }
+    };
     
     window.rejectUser = async function(userId) {
         try {
@@ -254,37 +251,34 @@ window.approveUser = async function(userId) {
             });
             return result.success;
         } catch (error) {
-            console.error('Failed to reject user:', error);
+            console.error('Failed to reject user');
             return false;
         }
     };
     
     window.getAllUsers = async function() {
-  try {
-    const result = await apiCall('/admin/all-users');
-   
-    return result.users || [];
-  } catch (error) {
-    console.error('Failed to get all users:', error);
-    return [];
-  }
-};
-
-
-window.deleteUser = async function(userId) {
-  try {
-    const result = await apiCall('/admin/reject-user', {
-      method: 'POST',
-      body: JSON.stringify({ userId })
-    });
- 
-    return result.success;
-  } catch (error) {
-    console.error('Failed to delete user:', error);
-    return false;
-  }
-};
-
+        try {
+            const result = await apiCall('/admin/all-users');
+            return result.users || [];
+        } catch (error) {
+            console.error('Failed to get all users');
+            return [];
+        }
+    };
+    
+    window.deleteUser = async function(userId) {
+        try {
+            const result = await apiCall('/admin/reject-user', {
+                method: 'POST',
+                body: JSON.stringify({ userId })
+            });
+            return result.success;
+        } catch (error) {
+            console.error('Failed to delete user');
+            return false;
+        }
+    };
+    
     window.createClass = async function(className, section) {
         try {
             const result = await apiCall('/admin/create-class', {
@@ -293,7 +287,7 @@ window.deleteUser = async function(userId) {
             });
             return result.success;
         } catch (error) {
-            console.error('Failed to create class:', error);
+            console.error('Failed to create class');
             return false;
         }
     };
@@ -306,7 +300,7 @@ window.deleteUser = async function(userId) {
             });
             return result.success;
         } catch (error) {
-            console.error('Failed to assign student:', error);
+            console.error('Failed to assign student');
             return false;
         }
     };
@@ -319,7 +313,7 @@ window.deleteUser = async function(userId) {
             });
             return result.success;
         } catch (error) {
-            console.error('Failed to assign teacher:', error);
+            console.error('Failed to assign teacher');
             return false;
         }
     };
@@ -332,146 +326,105 @@ window.deleteUser = async function(userId) {
             });
             return result.success;
         } catch (error) {
-            console.error('Failed to create subject:', error);
+            console.error('Failed to create subject');
             return false;
         }
     };
     
     window.getAllClasses = async function() {
         try {
-            const result = await apiCall('/classes');
+            const result = await apiCall('/admin/classes');
             return result.classes || [];
         } catch (error) {
-            console.error('Failed to get classes:', error);
+            console.error('Failed to get classes');
             return [];
         }
     };
     
     window.getAllStudents = async function() {
         try {
-            const result = await apiCall('/students');
+            const result = await apiCall('/admin/students');
             return result.students || [];
         } catch (error) {
-            console.error('Failed to get students:', error);
+            console.error('Failed to get students');
             return [];
         }
     };
     
     window.getAllTeachers = async function() {
         try {
-            const result = await apiCall('/teachers');
+            const result = await apiCall('/admin/teachers');
             return result.teachers || [];
         } catch (error) {
-            console.error('Failed to get teachers:', error);
+            console.error('Failed to get teachers');
             return [];
         }
     };
     
-   window.getAllSubjects = async function() {
-  try {
-    // ✅ NAYA ENDPOINT USE KARO
-    const result = await apiCall('/admin/subjects-with-classes');
-    console.log('📚 Subjects with classes:', result.subjects);
-    
-    if (result.success) {
-      return result.subjects || [];
-    } else {
-      throw new Error(result.error || 'Failed to fetch subjects');
-    }
-    
-  } catch (error) {
-    console.error('❌ Failed to get subjects with classes:', error);
-    
-    // ✅ FALLBACK: Purana endpoint try karo
-    try {
-      console.log('🔄 Trying fallback endpoint...');
-      const fallbackResult = await apiCall('/admin/subjects');
-      
-      if (fallbackResult.success) {
-        // Convert old format to new format
-        return fallbackResult.subjects.map(subject => ({
-          ...subject,
-          classes: subject.classes || []
-        }));
-      }
-    } catch (fallbackError) {
-      console.error('❌ Fallback also failed:', fallbackError);
-    }
-    
-    return [];
-  }
-};
+    window.getAllSubjects = async function() {
+        try {
+            const result = await apiCall('/admin/subjects-with-classes');
+            return result.subjects || [];
+        } catch (error) {
+            console.error('Failed to get subjects');
+            return [];
+        }
+    };
     
     // Teacher Functions
-
-// Teacher Functions - FIXED VERSION
-window.getTeacherClasses = async function() {
-  try {
-    const result = await apiCall('/teacher/classes');
+    window.getTeacherClasses = async function() {
+        try {
+            const result = await apiCall('/teacher/classes');
+            return result.classes || [];
+        } catch (error) {
+            console.error('Failed to get teacher classes');
+            return [];
+        }
+    };
     
-    if (result.success) {
-      return result.classes || [];
-    } else {
-      console.error('API Error:', result.error);
-      return [];
-    }
-  } catch (error) {
-    console.error('Failed to get teacher classes:', error);
-    return [];
-  }
-};
-
-
-window.getStudentsByClass = async function(classId) {
-  try {
-    const result = await apiCall(`/teacher/class/${classId}/students`); // ✅ CORRECT URL
-    return result.students || [];
-  } catch (error) {
-    console.error('Failed to get class students:', error);
-    return [];
-  }
-};
+    window.getStudentsByClass = async function(classId) {
+        try {
+            const result = await apiCall(`/teacher/class/${classId}/students`);
+            return result.students || [];
+        } catch (error) {
+            console.error('Failed to get class students');
+            return [];
+        }
+    };
     
     window.markAttendance = async function(classId, subjectId, date, attendanceData) {
         try {
-            const result = await apiCall('/attendance/mark', {
+            const result = await apiCall('/teacher/attendance/mark', {
                 method: 'POST',
                 body: JSON.stringify({ classId, subjectId, date, attendanceData })
             });
             return result.success;
         } catch (error) {
-            console.error('Failed to mark attendance:', error);
+            console.error('Failed to mark attendance');
             return false;
         }
     };
-
-
-    // In app.js - Update the getAttendanceReport function
-window.getAttendanceReport = async function(classId, subjectId, startDate, endDate) {
-  try {
-    const params = new URLSearchParams();
-    if (classId) params.append('classId', classId);
-    if (subjectId) params.append('subjectId', subjectId);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
     
-    console.log('🔍 API Call: Getting attendance report with params:', params.toString());
-    
-    const result = await apiCall(`/teacher/attendance/report?${params.toString()}`);
-    
-    console.log('✅ API Response:', result);
-    
-    return result;
-  } catch (error) {
-    console.error('❌ API Error in getAttendanceReport:', error);
-    return { 
-      success: false, 
-      error: error.message,
-      report: [],
-      summary: {}
+    window.getAttendanceReport = async function(classId, subjectId, startDate, endDate) {
+        try {
+            const params = new URLSearchParams();
+            if (classId) params.append('classId', classId);
+            if (subjectId) params.append('subjectId', subjectId);
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            
+            const result = await apiCall(`/teacher/attendance/report?${params.toString()}`);
+            return result;
+        } catch (error) {
+            console.error('Failed to get attendance report');
+            return { 
+                success: false, 
+                error: 'Failed to fetch report',
+                report: [],
+                summary: {}
+            };
+        }
     };
-  }
-};
     
     // Student Functions
     window.getStudentAttendance = async function() {
@@ -479,7 +432,7 @@ window.getAttendanceReport = async function(classId, subjectId, startDate, endDa
             const result = await apiCall('/student/attendance');
             return result.attendance || [];
         } catch (error) {
-            console.error('Failed to get student attendance:', error);
+            console.error('Failed to get student attendance');
             return [];
         }
     };
@@ -489,7 +442,7 @@ window.getAttendanceReport = async function(classId, subjectId, startDate, endDa
             const result = await apiCall('/student/classes');
             return result.classes || [];
         } catch (error) {
-            console.error('Failed to get student classes:', error);
+            console.error('Failed to get student classes');
             return [];
         }
     };
@@ -500,7 +453,7 @@ window.getAttendanceReport = async function(classId, subjectId, startDate, endDa
             const result = await apiCall('/analytics/data');
             return result;
         } catch (error) {
-            console.error('Failed to get analytics data:', error);
+            console.error('Failed to get analytics data');
             return {
                 totalStudents: 0,
                 totalClasses: 0,
@@ -518,7 +471,7 @@ window.getAttendanceReport = async function(classId, subjectId, startDate, endDa
             const result = await apiCall('/admin/data');
             return result;
         } catch (error) {
-            console.error('Failed to get integration data:', error);
+            console.error('Failed to get integration data');
             return {
                 classes: [],
                 subjects: []
@@ -574,66 +527,4 @@ window.getAttendanceReport = async function(classId, subjectId, startDate, endDa
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Smart Attendance System initialized');
     });
-
-
-    // Get all users (for admin page)
-window.getAllUsers = async function() {
-  try {
-    const result = await apiCall('/admin/all-users');
-    console.log('📋 All users:', result.users);
-    return result.users || [];
-  } catch (error) {
-    console.error('Failed to get all users:', error);
-    return [];
-  }
-};
-
-// Get all students - FIXED
-window.getAllStudents = async function() {
-  try {
-    const result = await apiCall('/admin/students'); // ✅ FIXED
-    return result.students || [];
-  } catch (error) {
-    console.error('Failed to get students:', error);
-    return [];
-  }
-};
-
-// Get all teachers - FIXED  
-window.getAllTeachers = async function() {
-  try {
-    const result = await apiCall('/admin/teachers'); // ✅ FIXED
-    return result.teachers || [];
-  } catch (error) {
-    console.error('Failed to get teachers:', error);
-    return [];
-  }
-};
-
-// Get all classes - FIXED
-window.getAllClasses = async function() {
-  try {
-    const result = await apiCall('/admin/classes'); // ✅ FIXED
-    return result.classes || [];
-  } catch (error) {
-    console.error('Failed to get classes:', error);
-    return [];
-  }
-};
-
-// Get all subjects - FIXED
-window.getAllSubjects = async function() {
-  try {
-    const result = await apiCall('/admin/subjects-with-classes');
-    console.log('📚 Subjects with classes:', result.subjects);
-    return result.subjects || [];
-  } catch (error) {
-    console.error('Failed to get subjects:', error);
-    return [];
-  }
-};
-
-
 })();
-
-
