@@ -7,6 +7,8 @@
   <link rel="icon" type="image/png" href="https://img.icons8.com/ios/50/ffffff/attendance-mark.png">
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     .sidebar {
@@ -295,9 +297,9 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div class="flex items-center justify-between mb-6">
             <h4 class="text-lg font-semibold text-gray-800">Report Results</h4>
-            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
-              <i class="fas fa-download mr-2"></i>Export PDF
-            </button>
+         <button onclick="exportToPDF(event)" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+  <i class="fas fa-download mr-2"></i>Export PDF
+</button>
           </div>
           <div id="reportResults" class="text-center py-12 text-gray-500">
             <i class="fas fa-chart-bar text-4xl mb-4 opacity-50"></i>
@@ -820,6 +822,226 @@
         `;
       }
     }
+
+
+// ✅ EXPORT TO PDF FUNCTION (FIXED VERSION)
+async function exportToPDF(event = null) {
+  try {
+    const classId = document.getElementById('reportClass').value;
+    const subjectId = document.getElementById('reportSubject').value;
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+    
+    if (!startDate || !endDate) {
+      alert('Please generate a report first before exporting to PDF');
+      return;
+    }
+
+    let exportButton = null;
+    
+    // Handle button state if event is provided
+    if (event && event.target) {
+      exportButton = event.target;
+      const originalText = exportButton.innerHTML;
+      exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating PDF...';
+      exportButton.disabled = true;
+    }
+
+    // Get the current report data
+    const result = await getAttendanceReport(classId, subjectId, startDate, endDate);
+    
+    if (!result.success || !result.report || result.report.length === 0) {
+      alert('No data available to export. Please generate a report first.');
+      if (exportButton) {
+        exportButton.innerHTML = '<i class="fas fa-download mr-2"></i>Export PDF';
+        exportButton.disabled = false;
+      }
+      return;
+    }
+
+    const report = result.report;
+    const summary = result.summary;
+
+    // Create PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Set document properties
+    doc.setProperties({
+      title: 'Attendance Report',
+      subject: 'Smart Attendance System Report',
+      author: 'Smart Attendance System',
+      keywords: 'attendance, report, students',
+      creator: 'Smart Attendance System'
+    });
+
+    // Add header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('ATTENDANCE REPORT', 105, 20, { align: 'center' });
+    
+    // Add report details
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Date Range: ${startDate} to ${endDate}`, 14, 30);
+    
+    if (classId) {
+      const classSelect = document.getElementById('reportClass');
+      const className = classSelect.options[classSelect.selectedIndex].text;
+      doc.text(`Class: ${className}`, 14, 35);
+    }
+    
+    if (subjectId) {
+      const subjectSelect = document.getElementById('reportSubject');
+      const subjectName = subjectSelect.options[subjectSelect.selectedIndex].text;
+      doc.text(`Subject: ${subjectName}`, 14, 40);
+    }
+    
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 45);
+    
+    // Add summary section
+    doc.setFontSize(12);
+    doc.setTextColor(40, 40, 40);
+    doc.text('SUMMARY', 14, 55);
+    
+    // Summary table
+    const summaryData = [
+      ['Total Records', summary.totalRecords || 0],
+      ['Present', `${summary.presentCount || 0} (${summary.presentPercentage || 0}%)`],
+      ['Absent', `${summary.absentCount || 0} (${summary.absentPercentage || 0}%)`],
+      ['Late', summary.lateCount || 0]
+    ];
+    
+    doc.autoTable({
+      startY: 60,
+      head: [['Metric', 'Value']],
+      body: summaryData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246] },
+      styles: { fontSize: 10 },
+      margin: { left: 14, right: 14 }
+    });
+
+    // Add detailed records
+    let finalY = doc.lastAutoTable.finalY + 15;
+    
+    if (finalY > 250) {
+      doc.addPage();
+      finalY = 20;
+    }
+    
+    doc.setFontSize(12);
+    doc.text('DETAILED RECORDS', 14, finalY);
+    
+    // Prepare data for detailed table
+    const tableData = report.map(record => {
+      const studentName = record.student ? 
+        `${record.student.firstName || ''} ${record.student.lastName || ''}`.trim() : 
+        'Unknown Student';
+      
+      const studentId = record.student && record.student.studentId ? 
+        record.student.studentId : 'N/A';
+      
+      const className = record.class ? 
+        `${record.class.name || ''} - ${record.class.section || ''}` : 
+        'Unknown Class';
+      
+      const subjectName = record.subject ? 
+        record.subject.name : 'Unknown Subject';
+      
+      const status = record.status ? 
+        record.status.charAt(0).toUpperCase() + record.status.slice(1) : 
+        'Unknown';
+      
+      const date = formatDate(record.date);
+      
+      return [date, studentName, studentId, className, subjectName, status];
+    });
+
+    // Add detailed table
+    doc.autoTable({
+      startY: finalY + 5,
+      head: [['Date', 'Student Name', 'Student ID', 'Class', 'Subject', 'Status']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246] },
+      styles: { fontSize: 8, cellPadding: 2 },
+      margin: { left: 14, right: 14 },
+      pageBreak: 'auto',
+      tableWidth: 'wrap',
+      columnStyles: {
+        0: { cellWidth: 25 }, // Date
+        1: { cellWidth: 35 }, // Student Name
+        2: { cellWidth: 25 }, // Student ID
+        3: { cellWidth: 30 }, // Class
+        4: { cellWidth: 30 }, // Subject
+        5: { cellWidth: 20 }  // Status
+      },
+      didDrawPage: function(data) {
+        // Add page numbers
+        const pageCount = doc.internal.getNumberOfPages();
+        const currentPage = data.pageNumber;
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Page ${currentPage} of ${pageCount}`, 105, 290, { align: 'center' });
+      }
+    });
+
+    // Add footer on last page
+    const pageCount = doc.internal.getNumberOfPages();
+    doc.setPage(pageCount);
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Generated by Smart Attendance System', 105, 285, { align: 'center' });
+
+    // Generate filename
+    let filename = `attendance_report_${startDate}_to_${endDate}`;
+    if (classId) {
+      const classSelect = document.getElementById('reportClass');
+      const className = classSelect.options[classSelect.selectedIndex].text.replace(/[^a-zA-Z0-9]/g, '_');
+      filename += `_${className}`;
+    }
+    if (subjectId) {
+      const subjectSelect = document.getElementById('reportSubject');
+      const subjectName = subjectSelect.options[subjectSelect.selectedIndex].text.replace(/[^a-zA-Z0-9]/g, '_');
+      filename += `_${subjectName}`;
+    }
+    filename += '.pdf';
+
+    // Save PDF
+    doc.save(filename);
+    
+    // Restore button state if button was found
+    if (exportButton) {
+      exportButton.innerHTML = '<i class="fas fa-download mr-2"></i>Export PDF';
+      exportButton.disabled = false;
+    }
+    
+  } catch (error) {
+    console.error('PDF export error:', error);
+    alert('Failed to generate PDF. Please try again.');
+    
+    // Restore button state on error
+    const exportButton = document.querySelector('button[onclick*="exportToPDF"]');
+    if (exportButton) {
+      exportButton.innerHTML = '<i class="fas fa-download mr-2"></i>Export PDF';
+      exportButton.disabled = false;
+    }
+  }
+}
+
+
+
+// ✅ FORMAT DATE FOR PDF (more detailed)
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
   </script>
 
 </body>
