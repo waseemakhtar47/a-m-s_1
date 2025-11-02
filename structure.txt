@@ -16,9 +16,7 @@
 �   +-- models
 �   �   +-- Attendance.js
 �   �   +-- Class.js
-�   �   +-- Student.js
 �   �   +-- Subject.js
-�   �   +-- Teacher.js
 �   �   +-- User.js
 �   �
 �   +-- node_modules
