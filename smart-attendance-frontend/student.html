@@ -178,9 +178,7 @@
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Date</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Subject</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Class</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Teacher</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
-                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Remarks</th>
                 </tr>
               </thead>
               <tbody id="attendanceHistory">
@@ -480,7 +478,6 @@
               ${record.subject?.code ? `<div class="text-xs text-gray-500">${record.subject.code}</div>` : ''}
             </td>
             <td class="py-3 px-4 text-sm">${className}</td>
-            <td class="py-3 px-4 text-sm">${teacherName}</td>
             <td class="py-3 px-4 text-sm">
               <span class="px-3 py-1 rounded-full text-xs font-medium ${
                 record.status === 'present' ? 'attendance-present' : 
@@ -489,7 +486,6 @@
                 ${record.status ? record.status.charAt(0).toUpperCase() + record.status.slice(1) : 'Unknown'}
               </span>
             </td>
-            <td class="py-3 px-4 text-sm text-gray-500">${record.remarks || '-'}</td>
           </tr>
         `;
       }).join('');
