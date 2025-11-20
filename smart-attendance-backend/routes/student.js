@@ -7,7 +7,6 @@ const {
 
 const router = express.Router();
 
-// All routes protected and require student role
 router.use(auth, requireRole(['student']));
 
 // Student Data

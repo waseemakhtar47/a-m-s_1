@@ -24,6 +24,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smart-att
 });
 
 
+const studentRoutes = require('./routes/student');
+app.use('/api/student', studentRoutes);
+
 
 // ========================
 // ✅ AUTH ROUTES
